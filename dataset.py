@@ -14,11 +14,12 @@ class Dataset:
         self.N = len(self.df.columns)
         self.M = len(self.df)
         
-    def scale(self, data):
+    def scale(self, data, norms=True):
         data.loc[:,:] = self.scaler.fit_transform(data.loc[:,:])
-        self.norms = data.apply(lambda row: np.linalg.norm(row), axis=1)
+        if norms:
+            self.norms = data.apply(lambda row: np.linalg.norm(row), axis=1)
         return data
-        
+    
     def normalize(self, data):
         data.loc[:,:] = normalize(data.loc[:,:])
         return data
@@ -105,8 +106,8 @@ class Dataset:
         df = df.drop('f0', 1)
         df = df.drop('f1', 1)
         
-        #df = df.sample(n=20)
-        #df.reset_index(drop=True, inplace=True)
+        df = df.sample(n=20)
+        df.reset_index(drop=True, inplace=True)
         
         df = self.scale(df)
         df = self.normalize(df)

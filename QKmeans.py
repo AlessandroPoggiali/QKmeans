@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, normalize
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
 #from qiskit.circuit.library import MCMT, RYGate
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
@@ -166,39 +165,42 @@ class QKMeans():
         
         series = []
         for i in range(self.K):
+            print(self.data[self.data['cluster']==i])
+            print("---")
+            print(self.data[self.data['cluster']==i].mean())
             series.append(self.data[self.data['cluster']==i].mean())
         self.centroids = pd.concat(series, axis=1).T
         
         # normalize centroid
-        self.centroids.loc[:,self.centroids.columns[:-1]] = normalize(self.centroids.loc[:,self.centroids.columns[:-1]])    
+        self.centroids.loc[:, self.centroids.columns[:-1]] = self.dataset.normalize(self.centroids.loc[:,self.centroids.columns[:-1]])
+        #self.centroids.loc[:,self.centroids.columns[:-1]] = normalize(self.centroids.loc[:,self.centroids.columns[:-1]])    
     
     
     '''
     Computes the new cluster centers as matrix-vector products
     '''
-    def computing_centroids(self, data, k):
+    def computing_centroids(self):
         
         #data = data.reset_index(drop=True)
-        Vt = data.drop('cluster', 1).T.values
+        Vt = self.data.drop('cluster', 1).T.values
         car_vectors = []
-        for i in range(k):
-            v = np.zeros(len(data))
-            index = data[data['cluster']==i].index
+        for i in range(self.K):
+            v = np.zeros(len(self.data))
+            index = self.data[self.data['cluster']==i].index
             v[index] = 1
             v = v/len(index)
             car_vectors.append(v)
         
         # compute matrix-vector products
         newcentroids = []
-        for i in range(k):
+        for i in range(self.K):
             c = Vt@car_vectors[i] 
             newcentroids.append(np.append(c, i))
         
-        centroids = pd.DataFrame(data=newcentroids, columns=data.columns)
+        self.centroids = pd.DataFrame(data=newcentroids, columns=self.data.columns)
         # normalize centroid
-        centroids.loc[:,centroids.columns[:-1]] = normalize(centroids.loc[:,centroids.columns[:-1]])    
-        return centroids    
-            
+        #centroids.loc[:,centroids.columns[:-1]] = normalize(centroids.loc[:,centroids.columns[:-1]])    
+        self.centroids.loc[:, self.centroids.columns[:-1]] = self.dataset.normalize(self.centroids.loc[:,self.centroids.columns[:-1]])
     
     def check_condition(self):
         # ritorna true se i centroidi non cambiano piu di un tot false altrimenti
@@ -236,7 +238,7 @@ class QKMeans():
             #centroids = computing_centroids_0(data, k)
             self.computing_centroids_0()
     
-            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True, initial_space=True)
+            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
             if self.check_condition():
                 break
