@@ -2,6 +2,7 @@ import numpy as np
 import math
 import pandas as pd
 import time
+import datetime
 import matplotlib.pyplot as plt
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
 #from qiskit.circuit.library import MCMT, RYGate
@@ -12,9 +13,13 @@ from utility import measures
 
 class QKMeans():
     def __init__(self, conf):
+        
         self.K = conf['K']
-        self.dataset = Dataset(conf['dataset_name'])
+        self.dataset_name = conf['dataset_name']
         self.sc_tresh = conf['sc_tresh']
+        self.max_iterations = conf['max_iterations']
+        
+        self.dataset = Dataset(self.dataset_name)
         self.data = self.dataset.df
         self.data['cluster'] = 0
         self.N = self.dataset.N
@@ -22,6 +27,11 @@ class QKMeans():
         self.centroids = self.data.sample(n=self.K)
         self.centroids['cluster'] = [x for x in range(self.K)]
         self.old_centroids = None
+        
+        self.ite = 0
+        self.accs = []
+        self.times = []
+        
         
     '''
     Compute all distances between vectors and centroids and assign cluster to every vector in many circuits
@@ -200,6 +210,7 @@ class QKMeans():
         #centroids.loc[:,centroids.columns[:-1]] = normalize(centroids.loc[:,centroids.columns[:-1]])    
         self.centroids.loc[:, self.centroids.columns[:-1]] = self.dataset.normalize(self.centroids.loc[:,self.centroids.columns[:-1]])
     
+    
     def stop_condition(self):
         # ritorna true se i centroidi non cambiano piu di un tot false altrimenti
 
@@ -213,16 +224,10 @@ class QKMeans():
         
         return True
     
-    def run(self, max_iterations):
+    
+    def run(self):
         
-        # select initial centroids
-        #centroids = data.sample(n=k)
-        #centroids['cluster'] = [x for x in range(k)]
         self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
-        
-        ite = 0
-        times = []
-        accs = []
         
         while not self.stop_condition():
             
@@ -230,7 +235,7 @@ class QKMeans():
             
             self.old_centroids = self.centroids.copy()
             
-            print("------------------ iteration " + str(ite) + "------------------")
+            print("------------------ iteration " + str(self.ite) + "------------------")
             print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
             cluster_assignment = self.computing_cluster(M1=len(self.data), shots=150000)
             self.data['cluster'] = cluster_assignment
@@ -245,38 +250,56 @@ class QKMeans():
             
             end = time.time()
             elapsed = end - start
-            times.append(elapsed)
+            self.times.append(elapsed)
             
             acc = measures.check_accuracy(self.data, self.centroids)
-            accs.append(acc)
+            self.accs.append(acc)
             print("Accuracy: " + str(round(acc, 2)) + "%")
             
             
-            ite = ite + 1
-            if ite == max_iterations:
+            self.ite = self.ite + 1
+            if self.ite == self.max_iterations:
                 break
         
-        
+    
+
+    def print_result(self, filename=None):
         self.dataset.plotOnCircle(self.data, self.centroids)
         
         print("")
         print("---------------- RESULT ----------------")
-        print("Iterations needed: " + str(ite) + "/" + str(max_iterations))
-        print("Average iteration time: " + str(round(np.mean(times), 2)) + " sec")
-        print("Average accuracy w.r.t classical assignment: " + str(round(np.mean(accs), 2)) + "%")
-        print("SSE: " + str(measures.SSE(self.data, self.centroids)))
+        print("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations))
+        
+        avg_time = round(np.mean(self.times), 2)
+        print("Average iteration time: " + str(avg_time) + " sec")
+        
+        avg_acc = round(np.mean(self.accs), 2)
+        print("Average accuracy w.r.t classical assignment: " + str(avg_acc) + "%")
+        
+        SSE = measures.SSE(self.data, self.centroids)
+        print("SSE: " + str(SSE))
     
         fig, ax = plt.subplots()
-        ax.plot(range(ite), accs, marker="o")
+        ax.plot(range(self.ite), self.accs, marker="o")
         ax.set(xlabel='QKmeans iterations', ylabel='Accuracy',
                title='Accuracy w.r.t classical assignemnt')
         plt.show()
+        
+        if filename is not None:
+            # stampa le cose anche su file 
+            
+            f = open(filename, 'a')
+            f.write("# TEST " + str(datetime.datetime.now().replace(microsecond=0)) + " on " + str(self.dataset_name) + " dataset\n")
+            f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M) + "\n")
+            f.write("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")
+            f.write('# Average iteration time: ' + str(avg_time) + '\n')
+            f.write('# Average accuracy w.r.t classical assignment: ' + str(avg_acc) + '\n')
+            f.write('# SSE: ' + str(SSE) + '\n')
+            f.write('# Final centroids \n')
+            
+            self.centroids.to_csv(f, index=False)
+            f.close()
+            
 
 
-if __name__ == "__main__":
-    
-    conf = {"dataset_name": 'iris', "K": 2, "sc_tresh": 0}
-    
-    QKMEANS = QKMeans(conf)
-    QKMEANS.run(max_iterations=5)
 
