@@ -7,17 +7,11 @@ def test_iris():
 
         'dataset_name': ['iris'],
         'K': [2,3],
+        'M1': [150],
+        'shots': [150000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
-    
-    '''
-    conf = {
-        "dataset_name": 'iris',
-        "K": 2,
-        "sc_tresh": 0,
-        "max_iterations":10 }
-    '''
     
     keys, values = zip(*params_iris.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
@@ -32,6 +26,8 @@ def test_iris():
         conf = {
             "dataset_name": params['dataset_name'],
             "K": params['K'],
+            "M1": params['M1'],
+            "shots": params['shots']
             "sc_tresh": params['sc_tresh'],
             "max_iterations": params['max_iterations'] 
         }

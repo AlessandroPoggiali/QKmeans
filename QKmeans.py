@@ -15,6 +15,8 @@ class QKMeans():
     def __init__(self, conf):
         
         self.K = conf['K']
+        self.M1 = conf['M1']
+        self.shots = conf['shots']
         self.dataset_name = conf['dataset_name']
         self.sc_tresh = conf['sc_tresh']
         self.max_iterations = conf['max_iterations']
@@ -237,7 +239,7 @@ class QKMeans():
             
             print("------------------ iteration " + str(self.ite) + "------------------")
             print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
-            cluster_assignment = self.computing_cluster(M1=len(self.data), shots=150000)
+            cluster_assignment = self.computing_cluster(M1=self.M1, shots=self.shots)
             self.data['cluster'] = cluster_assignment
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
@@ -289,7 +291,8 @@ class QKMeans():
             # stampa le cose anche su file 
             
             f = open(filename, 'a')
-            f.write("# TEST " + str(datetime.datetime.now().replace(microsecond=0)) + " on " + str(self.dataset_name) + " dataset\n")
+            dt = datetime.datetime.now().replace(microsecond=0)
+            f.write("# TEST " + str(dt) + " on " + str(self.dataset_name) + " dataset\n")
             f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M) + "\n")
             f.write("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")
             f.write('# Average iteration time: ' + str(avg_time) + '\n')
@@ -297,6 +300,8 @@ class QKMeans():
             f.write('# SSE: ' + str(SSE) + '\n')
             f.write('# Final centroids \n')
             
+            # qui stampare in file separati ogni volta 3 dataframe (data originali con cluster assegnati, data scalati e normalizzati con cluster assegnati)
+            # e centroidi scalati e normalizzati o fore basta solo l'assegnamento chissene del dataset ce l'ho già
             self.centroids.to_csv(f, index=False)
             f.close()
             
