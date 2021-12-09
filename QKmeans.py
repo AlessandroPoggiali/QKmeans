@@ -2,6 +2,7 @@ import numpy as np
 import math
 import pandas as pd
 import time
+import matplotlib.pyplot as plt
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
 #from qiskit.circuit.library import MCMT, RYGate
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
@@ -260,11 +261,16 @@ class QKMeans():
         
         print("")
         print("---------------- RESULT ----------------")
-        print("Iterations needed: " + str(ite))
+        print("Iterations needed: " + str(ite) + "/" + str(max_iterations))
         print("Average iteration time: " + str(round(np.mean(times), 2)) + " sec")
         print("Average accuracy w.r.t classical assignment: " + str(round(np.mean(accs), 2)) + "%")
         print("SSE: " + str(measures.SSE(self.data, self.centroids)))
     
+        fig, ax = plt.subplots()
+        ax.plot(range(ite), accs, marker="o")
+        ax.set(xlabel='QKmeans iterations', ylabel='Accuracy',
+               title='Accuracy w.r.t classical assignemnt')
+        plt.show()
 
 
 if __name__ == "__main__":
