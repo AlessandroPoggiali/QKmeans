@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import pandas as pd
+import time
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
 #from qiskit.circuit.library import MCMT, RYGate
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
@@ -19,7 +20,7 @@ class QKMeans():
         self.M = self.dataset.M
         self.centroids = self.data.sample(n=self.K)
         self.centroids['cluster'] = [x for x in range(self.K)]
-        self.old_centroids = self.centroids.copy()
+        self.old_centroids = None
         
     '''
     Compute all distances between vectors and centroids and assign cluster to every vector in many circuits
@@ -165,16 +166,12 @@ class QKMeans():
         
         series = []
         for i in range(self.K):
-            print(self.data[self.data['cluster']==i])
-            print("---")
-            print(self.data[self.data['cluster']==i].mean())
             series.append(self.data[self.data['cluster']==i].mean())
         self.centroids = pd.concat(series, axis=1).T
         
         # normalize centroid
-        self.centroids.loc[:, self.centroids.columns[:-1]] = self.dataset.normalize(self.centroids.loc[:,self.centroids.columns[:-1]])
-        #self.centroids.loc[:,self.centroids.columns[:-1]] = normalize(self.centroids.loc[:,self.centroids.columns[:-1]])    
-    
+        self.centroids.loc[:, self.centroids.columns[:-1]] = self.dataset.normalize(self.centroids.loc[:,self.centroids.columns[:-1]])  
+
     
     '''
     Computes the new cluster centers as matrix-vector products
@@ -202,13 +199,11 @@ class QKMeans():
         #centroids.loc[:,centroids.columns[:-1]] = normalize(centroids.loc[:,centroids.columns[:-1]])    
         self.centroids.loc[:, self.centroids.columns[:-1]] = self.dataset.normalize(self.centroids.loc[:,self.centroids.columns[:-1]])
     
-    def check_condition(self):
+    def stop_condition(self):
         # ritorna true se i centroidi non cambiano piu di un tot false altrimenti
-        
-        '''
-        in pratica se le differenze in valore assoluto fra tutti i vecchi centroidi e tutti
-        i nuovi centroidi sono tutte minori di una certa trashold allora mi fermo
-        '''
+
+        if self.old_centroids is None:
+            return False
 
         for i in range(len(self.centroids)):
             difference = np.linalg.norm(np.array(self.centroids.iloc[i][:-1])-np.array(self.old_centroids.iloc[i][:-1]))
@@ -217,18 +212,24 @@ class QKMeans():
         
         return True
     
-    def run(self, iterations):
+    def run(self, max_iterations):
         
         # select initial centroids
         #centroids = data.sample(n=k)
         #centroids['cluster'] = [x for x in range(k)]
         self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
         
-        for i in range(iterations):
+        ite = 0
+        times = []
+        accs = []
+        
+        while not self.stop_condition():
+            
+            start = time.time()
             
             self.old_centroids = self.centroids.copy()
             
-            print("------------------ iteration " + str(i) + "------------------")
+            print("------------------ iteration " + str(ite) + "------------------")
             print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
             cluster_assignment = self.computing_cluster(M1=len(self.data), shots=150000)
             self.data['cluster'] = cluster_assignment
@@ -238,18 +239,31 @@ class QKMeans():
             #centroids = computing_centroids_0(data, k)
             self.computing_centroids_0()
     
-            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
-    
-            if self.check_condition():
+            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, assignment=True, initial_space=False)
+            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, assignment=True, initial_space=True)
+            
+            end = time.time()
+            elapsed = end - start
+            times.append(elapsed)
+            
+            acc = measures.check_accuracy(self.data, self.centroids)
+            accs.append(acc)
+            print("Accuracy: " + str(round(acc, 2)) + "%")
+            
+            
+            ite = ite + 1
+            if ite == max_iterations:
                 break
         
         
         self.dataset.plotOnCircle(self.data, self.centroids)
         
-        print("Iterations needed: " + str(i+1))
+        print("")
+        print("---------------- RESULT ----------------")
+        print("Iterations needed: " + str(ite))
+        print("Average iteration time: " + str(round(np.mean(times), 2)) + " sec")
+        print("Average accuracy w.r.t classical assignment: " + str(round(np.mean(accs), 2)) + "%")
         print("SSE: " + str(measures.SSE(self.data, self.centroids)))
-        
-        
     
 
 
@@ -258,5 +272,5 @@ if __name__ == "__main__":
     conf = {"dataset_name": 'iris', "K": 2, "sc_tresh": 0}
     
     QKMEANS = QKMeans(conf)
-    QKMEANS.run(iterations=5)
+    QKMEANS.run(max_iterations=5)
 

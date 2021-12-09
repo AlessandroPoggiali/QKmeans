@@ -23,6 +23,5 @@ def check_accuracy(df, centroids):
     M = len(df)
     correct = M-error
     accuracy = (correct/M)*100
-    print("Accuracy: " + str(round(accuracy,2)) + "%")
-    return accuracy
     
+    return accuracy

@@ -14,10 +14,9 @@ class Dataset:
         self.N = len(self.df.columns)
         self.M = len(self.df)
         
-    def scale(self, data, norms=True):
+    def scale(self, data):
         data.loc[:,:] = self.scaler.fit_transform(data.loc[:,:])
-        if norms:
-            self.norms = data.apply(lambda row: np.linalg.norm(row), axis=1)
+        self.norms = data.apply(lambda row: np.linalg.norm(row), axis=1)
         return data
     
     def normalize(self, data):
@@ -47,11 +46,17 @@ class Dataset:
             data = self.inverse_normalize(data)
             data = self.inverse_scale(data)
             
-            if centroids is not None:
+            if centroids is not None and assignment:
+                series = []
+                for i in range(len(centroids)):
+                    series.append(data[data['cluster']==i].mean())
+                centroids = pd.concat(series, axis=1).T
+            
+            # initial centroids can be denormalized
+            if centroids is not None and not assignment:
                 centroids = centroids.copy()
                 centroids = self.inverse_normalize(centroids)
                 centroids = self.inverse_scale(centroids)
-                
             
         if centroids is not None:
             ind = 0 
@@ -61,7 +66,7 @@ class Dataset:
                 plt.annotate(centroid_name, (centroids.iloc[ind][x],centroids.iloc[ind][y]), fontsize=20)
                 ind = ind + 1
                 
-        if assignment is True:
+        if assignment:
             for cluster in data['cluster'].unique():
                 cluster = int(cluster)
                 X = data[data["cluster"] == cluster]
