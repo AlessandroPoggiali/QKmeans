@@ -4,6 +4,7 @@ import pandas as pd
 import time
 import datetime
 import matplotlib.pyplot as plt
+from sklearn import metrics
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
 #from qiskit.circuit.library import MCMT, RYGate
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
@@ -16,7 +17,7 @@ class QKMeans():
         
         self.K = conf['K']
         self.M1 = conf['M1']
-        self.shots = conf['shots']
+        self.shots = (self.K + self.M1) * 1000
         self.dataset_name = conf['dataset_name']
         self.sc_tresh = conf['sc_tresh']
         self.max_iterations = conf['max_iterations']
@@ -28,7 +29,10 @@ class QKMeans():
         self.M = self.dataset.M
         self.centroids = self.data.sample(n=self.K)
         self.centroids['cluster'] = [x for x in range(self.K)]
+        self.initial_centroids = self.centroids.copy()
         self.old_centroids = None
+        
+        self.cluster_assignment = []
         
         self.ite = 0
         self.accs = []
@@ -48,30 +52,15 @@ class QKMeans():
         I_qbits = math.ceil(math.log(N,2))     # number of qubits needed to index the features
         C_qbits = math.ceil(math.log(K,2))     # number of qbits needed for indexing all centroids
         Rqram_qbits = 1                        # number of qbits for qram register
-        QRAMINDEX_qbits = math.ceil(math.log(M1,2))     # number of qubits needed to index the qrams (i.e 'test' vectors)
-        Aqram_qbits = I_qbits + C_qbits + QRAMINDEX_qbits + Aknn_qbits - 2 # number of qbits for qram ancillas
-        if C_qbits > QRAMINDEX_qbits:
-            Aqram_qbits = Aqram_qbits - QRAMINDEX_qbits
-        else:
-            Aqram_qbits = Aqram_qbits - C_qbits
-        Tot_qbits = I_qbits + C_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits + QRAMINDEX_qbits
         
         a = QuantumRegister(Aknn_qbits, 'a')   # ancilla qubit for distance
         i = QuantumRegister(I_qbits, 'i')      # feature index
         c = QuantumRegister(C_qbits, 'c')      # cluster
         r = QuantumRegister(1, 'r')            # rotation qubit for vector's features
-        qramindex = QuantumRegister(QRAMINDEX_qbits,'qramindex')     # index for qrams
         
-        if Aqram_qbits > 0:
-            q = QuantumRegister(Aqram_qbits, 'q')  # qram ancilla
-    
-        classical_bit = C_qbits + QRAMINDEX_qbits  + 2  # C_qbits for clusters + QRAMINDEX_qbits for qram + 1 for ancilla + 1 for register    
-        outcome = ClassicalRegister(classical_bit, 'bit')  # for measuring
-        
-        n_circuits = int(M/M1)
+        n_circuits = math.ceil(M/M1)
         
         print("circuits needed:  " + str(n_circuits))
-        print("total qbits needed for each circuit:  " + str(Tot_qbits))
         
         cluster_assignment = []
         
@@ -81,7 +70,31 @@ class QKMeans():
             
             vectors = self.data[j*M1:(j+1)*M1]
             
+            if j == n_circuits-1:
+                M1 = M-M1*(n_circuits-1)
+                
+            print("vector to classify: " + str(M1))
+                
+            QRAMINDEX_qbits = math.ceil(math.log(M1,2))     # number of qubits needed to index the qrams (i.e 'test' vectors)
+            
+            if QRAMINDEX_qbits == 0: # se mi rimane solo un record da assegnare ad un cluster tengo comunque un qubit per qrama anche se non mi serve
+                QRAMINDEX_qbits = 1
+            
+            Aqram_qbits = I_qbits + C_qbits + QRAMINDEX_qbits + Aknn_qbits - 2 # number of qbits for qram ancillas
+            if C_qbits > QRAMINDEX_qbits:
+                Aqram_qbits = Aqram_qbits - QRAMINDEX_qbits
+            else:
+                Aqram_qbits = Aqram_qbits - C_qbits
+            Tot_qbits = I_qbits + C_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits + QRAMINDEX_qbits
+            print("total qbits needed for this circuit:  " + str(Tot_qbits))
+            
+            qramindex = QuantumRegister(QRAMINDEX_qbits,'qramindex')     # index for qrams           
+    
+            classical_bit = C_qbits + QRAMINDEX_qbits  + 2  # C_qbits for clusters + QRAMINDEX_qbits for qram + 1 for ancilla + 1 for register    
+            outcome = ClassicalRegister(classical_bit, 'bit')  # for measuring
+                
             if Aqram_qbits > 0:
+                q = QuantumRegister(Aqram_qbits, 'q')  # qram ancilla
                 circuit = QuantumCircuit(a, i, r, q, c, qramindex, outcome)
             else:
                 circuit = QuantumCircuit(a, i, r, c, qramindex, outcome)
@@ -168,7 +181,7 @@ class QKMeans():
                 #print("Quantum assignment: " + str(cluster))    
     
             #df.loc[j*M1:(j+1)*M1-1,'cluster'] = cluster_assignment 
-        return cluster_assignment
+        self.cluster_assignment = cluster_assignment
             
     
     '''
@@ -239,8 +252,8 @@ class QKMeans():
             
             print("------------------ iteration " + str(self.ite) + "------------------")
             print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
-            cluster_assignment = self.computing_cluster(M1=self.M1, shots=self.shots)
-            self.data['cluster'] = cluster_assignment
+            self.computing_cluster(M1=self.M1, shots=self.shots)
+            self.data['cluster'] = self.cluster_assignment
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
             print("Computing new centroids")
@@ -269,7 +282,7 @@ class QKMeans():
         self.dataset.plotOnCircle(self.data, self.centroids)
         
         print("")
-        print("---------------- RESULT ----------------")
+        print("---------------- QKMEANS RESULT ----------------")
         print("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations))
         
         avg_time = round(np.mean(self.times), 2)
@@ -280,6 +293,9 @@ class QKMeans():
         
         SSE = measures.SSE(self.data, self.centroids)
         print("SSE: " + str(SSE))
+        
+        silhouette = metrics.silhouette_score(self.data.loc[:,self.data.columns[:-1]], self.data['cluster'], metric='euclidean')
+        print("Silhouette score: " + str(silhouette))
     
         fig, ax = plt.subplots()
         ax.plot(range(self.ite), self.accs, marker="o")
@@ -292,17 +308,19 @@ class QKMeans():
             
             f = open(filename, 'a')
             dt = datetime.datetime.now().replace(microsecond=0)
-            f.write("# TEST " + str(dt) + " on " + str(self.dataset_name) + " dataset\n")
-            f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M) + "\n")
-            f.write("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")
-            f.write('# Average iteration time: ' + str(avg_time) + '\n')
-            f.write('# Average accuracy w.r.t classical assignment: ' + str(avg_acc) + '\n')
+            f.write("###### TEST " + str(dt) + " on " + str(self.dataset_name) + " dataset\n")
+            f.write("## QKMEANS\n")
+            f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
+            f.write("# Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")
+            f.write('# Average iteration time: ' + str(avg_time) + 's \n')
+            f.write('# Average accuracy w.r.t classical assignment: ' + str(avg_acc) + '% \n')
             f.write('# SSE: ' + str(SSE) + '\n')
-            f.write('# Final centroids \n')
-            
-            # qui stampare in file separati ogni volta 3 dataframe (data originali con cluster assegnati, data scalati e normalizzati con cluster assegnati)
-            # e centroidi scalati e normalizzati o fore basta solo l'assegnamento chissene del dataset ce l'ho già
-            self.centroids.to_csv(f, index=False)
+            f.write('# Silhouette: ' + str(silhouette) + '\n')
+            f.write("# Quantum kmeans assignment \n")
+            f.write(str(self.cluster_assignment))            
+            f.write("\n")
+            #f.write('# Final centroids \n'
+            #self.centroids.to_csv(f, index=False)
             f.close()
             
 
