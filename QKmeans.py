@@ -73,7 +73,8 @@ class QKMeans():
             if j == n_circuits-1:
                 M1 = M-M1*(n_circuits-1)
                 
-            print("vector to classify: " + str(M1))
+            print("vectors to classify: " + str(M1))
+            print("shots: " + str(self.shots))
                 
             QRAMINDEX_qbits = math.ceil(math.log(M1,2))     # number of qubits needed to index the qrams (i.e 'test' vectors)
             
@@ -242,7 +243,7 @@ class QKMeans():
     
     def run(self):
         
-        self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
+        #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
         
         while not self.stop_condition():
             
@@ -260,8 +261,8 @@ class QKMeans():
             #centroids = computing_centroids_0(data, k)
             self.computing_centroids_0()
     
-            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, assignment=True, initial_space=False)
-            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, assignment=True, initial_space=True)
+            #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, assignment=True, initial_space=False)
+            #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, assignment=True, initial_space=True)
             
             end = time.time()
             elapsed = end - start
@@ -279,7 +280,7 @@ class QKMeans():
     
 
     def print_result(self, filename=None):
-        self.dataset.plotOnCircle(self.data, self.centroids)
+        #self.dataset.plotOnCircle(self.data, self.centroids)
         
         print("")
         print("---------------- QKMEANS RESULT ----------------")

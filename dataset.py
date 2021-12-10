@@ -107,12 +107,12 @@ class Dataset:
         # rename columns
         df.columns = ["f0","f1","f2","f3","class"]
         # drop class column
-        df = df.drop('class', 1)
-        df = df.drop('f0', 1)
-        df = df.drop('f1', 1)
+        df = df.drop('class', axis=1)
+        #df = df.drop('f0', axis=1)
+        #df = df.drop('f1', axis=1)
         
-        df = df.sample(n=20)
-        df.reset_index(drop=True, inplace=True)
+        #df = df.sample(n=20)
+        #df.reset_index(drop=True, inplace=True)
         
         df = self.scale(df)
         df = self.normalize(df)

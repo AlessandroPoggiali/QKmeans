@@ -6,7 +6,7 @@ def SSE(data, centroids):
     data = data.reset_index(drop=True)
     for index_v, v in data.iterrows():
         c = data.iloc[index_v]['cluster']
-        sse = sse + np.linalg.norm(np.array(data.iloc[index_v][:-1])-np.array(centroids.iloc[int(c)][:-1]))
+        sse = sse + np.linalg.norm(np.array(data.iloc[index_v][:-1])-np.array(centroids.iloc[int(c)][:-1]))**2
     return sse
 
 # method used to check classification accuracy between quantum and classical distances

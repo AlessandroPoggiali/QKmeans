@@ -13,8 +13,8 @@ def test_iris():
     params_iris = {
 
         'dataset_name': ['iris'],
-        'K': [2],
-        'M1': [20],
+        'K': [2, 3, 4],
+        'M1': [4, 64, 150],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -60,10 +60,12 @@ def test_iris():
         elapsed = end - start
         
         print("Iterations needed: " + str(kmeans.n_iter_) + "/" + str(conf['max_iterations']))
+        avg_time = elapsed / kmeans.n_iter_
+        print('Average iteration time: ' + str(avg_time) + 's \n')
         print('SSE kmeans %s' % kmeans.inertia_)
         silhouette = silhouette_score(data, kmeans.labels_, metric='euclidean')
         print('Silhouette kmeans %s' % silhouette)
-        avg_time = elapsed / kmeans.n_iter_
+        
         
         f = open(filename, 'a')
         f.write("## Classical KMEANS\n")
@@ -73,13 +75,18 @@ def test_iris():
         f.write('# Silhouette: ' + str(silhouette) + '\n')
         f.write("# Classical Kmeans assignment\n")
         f.write(str(kmeans.labels_.tolist()))
-        f.write("\n\n")
-        f.close()
+        f.write("\n")
 
         print("")        
         print("------------- COMPARING THE TWO CLUSTERING ALGORITHM ------------")
-        print(pair_confusion_matrix(QKMEANS.cluster_assignment, kmeans.labels_.tolist()))
+        print("pair confision matrix")
+        cm = pair_confusion_matrix(QKMEANS.cluster_assignment, kmeans.labels_.tolist())
+        print(cm)
 
+        f.write("## Comparing quantum with classical kmeans algorithm\n")
+        f.write(str(cm))
+        f.write("\n\n")
+        f.close()
 
 if __name__ == "__main__":
     
