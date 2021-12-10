@@ -60,21 +60,21 @@ class QKMeans():
         
         n_circuits = math.ceil(M/M1)
         
-        print("circuits needed:  " + str(n_circuits))
+        #print("circuits needed:  " + str(n_circuits))
         
         cluster_assignment = []
         
         for j in range(n_circuits):
         
-            print("Circuit " + str(j+1) + "/" + str(n_circuits))
+            #print("Circuit " + str(j+1) + "/" + str(n_circuits))
             
             vectors = self.data[j*M1:(j+1)*M1]
             
             if j == n_circuits-1:
                 M1 = M-M1*(n_circuits-1)
                 
-            print("vectors to classify: " + str(M1))
-            print("shots: " + str(self.shots))
+            #print("vectors to classify: " + str(M1))
+            #print("shots: " + str(self.shots))
                 
             QRAMINDEX_qbits = math.ceil(math.log(M1,2))     # number of qubits needed to index the qrams (i.e 'test' vectors)
             
@@ -87,7 +87,7 @@ class QKMeans():
             else:
                 Aqram_qbits = Aqram_qbits - C_qbits
             Tot_qbits = I_qbits + C_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits + QRAMINDEX_qbits
-            print("total qbits needed for this circuit:  " + str(Tot_qbits))
+            #print("total qbits needed for this circuit:  " + str(Tot_qbits))
             
             qramindex = QuantumRegister(QRAMINDEX_qbits,'qramindex')     # index for qrams           
     
@@ -251,13 +251,13 @@ class QKMeans():
             
             self.old_centroids = self.centroids.copy()
             
-            print("------------------ iteration " + str(self.ite) + "------------------")
-            print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
+            print("iteration: " + str(self.ite))
+            #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
             self.computing_cluster(M1=self.M1, shots=self.shots)
             self.data['cluster'] = self.cluster_assignment
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
-            print("Computing new centroids")
+            #print("Computing new centroids")
             #centroids = computing_centroids_0(data, k)
             self.computing_centroids_0()
     
@@ -279,7 +279,7 @@ class QKMeans():
         
     
 
-    def print_result(self, filename=None):
+    def print_result(self, filename=None, index_test=0):
         #self.dataset.plotOnCircle(self.data, self.centroids)
         
         print("")
@@ -300,16 +300,18 @@ class QKMeans():
     
         fig, ax = plt.subplots()
         ax.plot(range(self.ite), self.accs, marker="o")
-        ax.set(xlabel='QKmeans iterations', ylabel='Accuracy',
-               title='Accuracy w.r.t classical assignemnt')
-        plt.show()
+        ax.set(xlabel='QKmeans iterations', ylabel='Accuracy w.r.t classical assignment')
+        ax.set_title("K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots))
+        #plt.show()
+        dt = datetime.datetime.now().replace(microsecond=0)
+        #str_dt = str(dt).replace(" ", "_")
+        fig.savefig("./plot/acc_"+str(index_test)+".png")
         
         if filename is not None:
             # stampa le cose anche su file 
             
             f = open(filename, 'a')
-            dt = datetime.datetime.now().replace(microsecond=0)
-            f.write("###### TEST " + str(dt) + " on " + str(self.dataset_name) + " dataset\n")
+            f.write("###### TEST " + str(index_test) + " on " + str(self.dataset_name) + " dataset\n")
             f.write("## QKMEANS\n")
             f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
             f.write("# Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")
@@ -324,6 +326,7 @@ class QKMeans():
             #self.centroids.to_csv(f, index=False)
             f.close()
             
-
+    def print_params(self):
+        print("Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
 
 

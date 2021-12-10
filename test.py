@@ -13,8 +13,8 @@ def test_iris():
     params_iris = {
 
         'dataset_name': ['iris'],
-        'K': [2, 3, 4],
-        'M1': [4, 64, 150],
+        'K': [2],
+        'M1': [4],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -41,8 +41,9 @@ def test_iris():
     
         # execute quantum kmenas
         QKMEANS = QKMeans(conf)
+        QKMEANS.print_params()
         QKMEANS.run()
-        QKMEANS.print_result(filename)  
+        QKMEANS.print_result(filename, i)  
     
         print("")
         print("---------------- CLASSICAL KMEANS ----------------")
