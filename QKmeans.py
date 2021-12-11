@@ -251,7 +251,7 @@ class QKMeans():
             
             self.old_centroids = self.centroids.copy()
             
-            print("iteration: " + str(self.ite))
+           # print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
             self.computing_cluster(M1=self.M1, shots=self.shots)
             self.data['cluster'] = self.cluster_assignment
@@ -270,7 +270,7 @@ class QKMeans():
             
             acc = measures.check_accuracy(self.data, self.centroids)
             self.accs.append(acc)
-            print("Accuracy: " + str(round(acc, 2)) + "%")
+            #print("Accuracy: " + str(round(acc, 2)) + "%")
             
             
             self.ite = self.ite + 1
@@ -282,21 +282,21 @@ class QKMeans():
     def print_result(self, filename=None, index_test=0):
         #self.dataset.plotOnCircle(self.data, self.centroids)
         
-        print("")
-        print("---------------- QKMEANS RESULT ----------------")
-        print("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations))
+        #print("")
+        #print("---------------- QKMEANS RESULT ----------------")
+        #print("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations))
         
         avg_time = round(np.mean(self.times), 2)
-        print("Average iteration time: " + str(avg_time) + " sec")
+        #print("Average iteration time: " + str(avg_time) + " sec")
         
         avg_acc = round(np.mean(self.accs), 2)
-        print("Average accuracy w.r.t classical assignment: " + str(avg_acc) + "%")
+        #print("Average accuracy w.r.t classical assignment: " + str(avg_acc) + "%")
         
         SSE = measures.SSE(self.data, self.centroids)
-        print("SSE: " + str(SSE))
+        #print("SSE: " + str(SSE))
         
         silhouette = metrics.silhouette_score(self.data.loc[:,self.data.columns[:-1]], self.data['cluster'], metric='euclidean')
-        print("Silhouette score: " + str(silhouette))
+        #print("Silhouette score: " + str(silhouette))
     
         fig, ax = plt.subplots()
         ax.plot(range(self.ite), self.accs, marker="o")
@@ -326,7 +326,8 @@ class QKMeans():
             #self.centroids.to_csv(f, index=False)
             f.close()
             
-    def print_params(self):
-        print("Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
+    def print_params(self, process=0, i=0):
+        print("Process " + str(process) + " - configuration: " + str(i) + 
+              "\nParameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
 
 
