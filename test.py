@@ -98,8 +98,8 @@ def par_test_iris(n_processes=2):
     params_iris = {
 
         'dataset_name': ['iris'],
-        'K': [2,3,4,5,6,7,8],
-        'M1': [2,4,8,16,32,64,128,150],
+        'K': [2,3,4,5,6],
+        'M1': [2,4,8,16,32,64,128],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
