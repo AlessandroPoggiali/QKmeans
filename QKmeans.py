@@ -279,7 +279,7 @@ class QKMeans():
         
     
 
-    def print_result(self, filename=None, index_test=0):
+    def print_result(self, filename=None, process=0, index_conf=0):
         #self.dataset.plotOnCircle(self.data, self.centroids)
         
         #print("")
@@ -305,13 +305,14 @@ class QKMeans():
         #plt.show()
         dt = datetime.datetime.now().replace(microsecond=0)
         #str_dt = str(dt).replace(" ", "_")
-        fig.savefig("./plot/acc_"+str(index_test)+".png")
+        fig.savefig("./plot/acc_"+str(process)+"_"+str(index_conf)+".png")
         
         if filename is not None:
             # stampa le cose anche su file 
             
             f = open(filename, 'a')
-            f.write("###### TEST " + str(index_test) + " on " + str(self.dataset_name) + " dataset\n")
+            f.write("###### TEST " + str(process)+"_"+str(index_conf) + " on " + str(self.dataset_name) + " dataset\n")
+            f.write("# Executed on " + str(dt))
             f.write("## QKMEANS\n")
             f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
             f.write("# Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")

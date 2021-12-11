@@ -7,7 +7,6 @@ from sklearn.metrics import silhouette_score
 from sklearn.metrics.cluster import pair_confusion_matrix
 import time
 
-
 def test_iris():
     
     filename = 'result/iris.csv'
@@ -98,8 +97,8 @@ def par_test_iris(n_processes=2):
     params_iris = {
 
         'dataset_name': ['iris'],
-        'K': [2,3,4,5,6],
-        'M1': [2,4,8,16,32,64,128],
+        'K': [2,3,4,5],
+        'M1': [2,4,8,16,32,64,128,150],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -110,8 +109,7 @@ def par_test_iris(n_processes=2):
     print("Iris dataset test, total configurations: " + str(len(params_list)))
     
     list_chunks = np.array_split(params_list, n_processes)
-    n_conf_per_process = int(len(params_list)/n_processes)
-    processes = [mp.Process(target=test_iris_0, args=(chunk, i, n_conf_per_process))  for i, chunk in enumerate(list_chunks)]
+    processes = [mp.Process(target=test_iris_0, args=(chunk, i))  for i, chunk in enumerate(list_chunks)]
 
     for p in processes:
         p.start()
@@ -132,8 +130,7 @@ def par_test_iris(n_processes=2):
         f1.close()
     f.close()
 
-
-def test_iris_0(chunk, n_chunk, n_conf_per_process):
+def test_iris_0(chunk, n_chunk):
     
     filename  = "result/iris_" + str(n_chunk) + ".csv" 
     
@@ -150,8 +147,8 @@ def test_iris_0(chunk, n_chunk, n_conf_per_process):
         # execute quantum kmenas
         QKMEANS = QKMeans(conf)
         QKMEANS.print_params(n_chunk, i)
-        QKMEANS.run()
-        QKMEANS.print_result(filename, i+n_chunk*n_conf_per_process)  
+        QKMEANS.run()        
+        QKMEANS.print_result(filename, n_chunk, i)  
     
         #print("")
         #print("---------------- CLASSICAL KMEANS ----------------")
