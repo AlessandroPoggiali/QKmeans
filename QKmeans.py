@@ -8,31 +8,34 @@ from sklearn import metrics
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
 #from qiskit.circuit.library import MCMT, RYGate
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
-from dataset import Dataset
 from QRAM import buildCentroidState, buildVectorsState
 from utility import measures
 
 class QKMeans():
-    def __init__(self, conf):
+    def __init__(self, dataset, conf, seed):
         
         self.K = conf['K']
         self.M1 = conf['M1']
-        self.shots = (self.K + self.M1) * 1000
+        self.shots = min((self.K + self.M1) * 1000, 500000)
         self.dataset_name = conf['dataset_name']
         self.sc_tresh = conf['sc_tresh']
         self.max_iterations = conf['max_iterations']
         
-        self.dataset = Dataset(self.dataset_name)
+        self.seed = seed
+        self.dataset = dataset
         self.data = self.dataset.df
-        self.data['cluster'] = 0
+        #self.data['cluster'] = 0
         self.N = self.dataset.N
         self.M = self.dataset.M
-        self.centroids = self.data.sample(n=self.K)
-        self.centroids['cluster'] = [x for x in range(self.K)]
+        self.centroids = self.data.sample(n=self.K, random_state=seed).values
+        #self.centroids['cluster'] = [x for x in range(self.K)]
         self.initial_centroids = self.centroids.copy()
         self.old_centroids = None
         
-        self.cluster_assignment = []
+        self.cluster_assignment = [0]*self.M
+        
+        self.max_qbits = 0
+        self.n_circuits = 0
         
         self.ite = 0
         self.accs = []
@@ -58,20 +61,20 @@ class QKMeans():
         c = QuantumRegister(C_qbits, 'c')      # cluster
         r = QuantumRegister(1, 'r')            # rotation qubit for vector's features
         
-        n_circuits = math.ceil(M/M1)
+        self.n_circuits = math.ceil(M/M1)
         
         #print("circuits needed:  " + str(n_circuits))
         
         cluster_assignment = []
         
-        for j in range(n_circuits):
+        for j in range(self.n_circuits):
         
             #print("Circuit " + str(j+1) + "/" + str(n_circuits))
             
             vectors = self.data[j*M1:(j+1)*M1]
             
-            if j == n_circuits-1:
-                M1 = M-M1*(n_circuits-1)
+            if j == self.n_circuits-1:
+                M1 = M-M1*(self.n_circuits-1)
                 
             #print("vectors to classify: " + str(M1))
             #print("shots: " + str(self.shots))
@@ -86,7 +89,9 @@ class QKMeans():
                 Aqram_qbits = Aqram_qbits - QRAMINDEX_qbits
             else:
                 Aqram_qbits = Aqram_qbits - C_qbits
-            Tot_qbits = I_qbits + C_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits + QRAMINDEX_qbits
+            tot_qbits = I_qbits + C_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits + QRAMINDEX_qbits
+            if j == 0:
+                self.max_qbits = tot_qbits
             #print("total qbits needed for this circuit:  " + str(Tot_qbits))
             
             qramindex = QuantumRegister(QRAMINDEX_qbits,'qramindex')     # index for qrams           
@@ -193,11 +198,14 @@ class QKMeans():
         
         series = []
         for i in range(self.K):
-            series.append(self.data[self.data['cluster']==i].mean())
-        self.centroids = pd.concat(series, axis=1).T
-        
-        # normalize centroid
-        self.centroids.loc[:, self.centroids.columns[:-1]] = self.dataset.normalize(self.centroids.loc[:,self.centroids.columns[:-1]])  
+            if i in self.cluster_assignment:
+                series.append(self.data.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
+            else: 
+                series.append(self.centroids[self.centroids['cluster']==i].T)
+                
+        df_centroids = pd.concat(series, axis=1).T
+        self.centroids = self.dataset.normalize(df_centroids).values
+
 
     
     '''
@@ -234,7 +242,7 @@ class QKMeans():
             return False
 
         for i in range(len(self.centroids)):
-            difference = np.linalg.norm(np.array(self.centroids.iloc[i][:-1])-np.array(self.old_centroids.iloc[i][:-1]))
+            difference = np.linalg.norm(self.centroids[i]-self.old_centroids[i])
             if difference > self.sc_tresh:
                 return False
         
@@ -254,7 +262,6 @@ class QKMeans():
            # print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
             self.computing_cluster(M1=self.M1, shots=self.shots)
-            self.data['cluster'] = self.cluster_assignment
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
             #print("Computing new centroids")
@@ -268,7 +275,7 @@ class QKMeans():
             elapsed = end - start
             self.times.append(elapsed)
             
-            acc = measures.check_accuracy(self.data, self.centroids)
+            acc = measures.check_similarity(self.data, self.centroids, self.cluster_assignment)
             self.accs.append(acc)
             #print("Accuracy: " + str(round(acc, 2)) + "%")
             
@@ -277,8 +284,24 @@ class QKMeans():
             if self.ite == self.max_iterations:
                 break
         
+    def avg_ite_time(self):
+        return round(np.mean(self.times), 2)
     
-
+    def avg_sim(self):
+        return round(np.mean(self.accs), 2)
+    
+    def SSE(self):
+        return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
+    
+    def silhouette(self):
+        return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
+    
+    def vmeasure(self):
+        return 'None'
+    
+    def nm_info(self):
+        return 'None'
+        
     def print_result(self, filename=None, process=0, index_conf=0):
         #self.dataset.plotOnCircle(self.data, self.centroids)
         
@@ -292,10 +315,10 @@ class QKMeans():
         avg_acc = round(np.mean(self.accs), 2)
         #print("Average accuracy w.r.t classical assignment: " + str(avg_acc) + "%")
         
-        SSE = measures.SSE(self.data, self.centroids)
+        SSE = measures.SSE(self.data, self.centroids, self.cluster_assignment)
         #print("SSE: " + str(SSE))
         
-        silhouette = metrics.silhouette_score(self.data.loc[:,self.data.columns[:-1]], self.data['cluster'], metric='euclidean')
+        silhouette = metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean')
         #print("Silhouette score: " + str(silhouette))
     
         fig, ax = plt.subplots()
@@ -312,12 +335,12 @@ class QKMeans():
             
             f = open(filename, 'a')
             f.write("###### TEST " + str(process)+"_"+str(index_conf) + " on " + str(self.dataset_name) + " dataset\n")
-            f.write("# Executed on " + str(dt))
+            f.write("# Executed on " + str(dt) + "\n")
             f.write("## QKMEANS\n")
             f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
             f.write("# Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")
             f.write('# Average iteration time: ' + str(avg_time) + 's \n')
-            f.write('# Average accuracy w.r.t classical assignment: ' + str(avg_acc) + '% \n')
+            f.write('# Average similarity w.r.t classical assignment: ' + str(avg_acc) + '% \n')
             f.write('# SSE: ' + str(SSE) + '\n')
             f.write('# Silhouette: ' + str(silhouette) + '\n')
             f.write("# Quantum kmeans assignment \n")

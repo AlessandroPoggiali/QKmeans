@@ -10,7 +10,7 @@ def indexing(circuit, Qregister, index):
         j = j+1
 
 def encodeVector(circuit, data, i, controls, rotationQubits, ancillaQubits):
-    for j in range(len(data)-1): # avoid cluster column
+    for j in range(len(data)): 
         # put the appropiate X gates on i qubits 
         indexing(circuit, i, j)
         # apply the controlled rotation
@@ -20,7 +20,7 @@ def encodeVector(circuit, data, i, controls, rotationQubits, ancillaQubits):
         indexing(circuit, i, j)
         circuit.barrier()
         
-def encodeCentroids(circuit, data, i, controls, rotationQubit, ancillaQubits, c, cluster, j):
+def encodeCentroids(circuit, data, i, controls, rotationQubit, ancillaQubits, c, cluster):
     # encode the cluster value putting the appropiate X gates on c qubits
     indexing(circuit, c, cluster)
     
@@ -50,7 +50,6 @@ def buildVectorsState(vectors, circuit, a, i, qramindex, r, q):
         encodeVectors(circuit, vector, i, a[:]+i[:]+qramindex[:], r[0], q, qramindex, j)
     
 def buildCentroidState(centroids, circuit, a, i, c, r, q):
-    for j in range(len(centroids.index)):
-        centroidVector = centroids.iloc[j]
-        encodeCentroids(circuit, centroidVector, i, a[:]+i[:]+c[:], r[0], q, c, int(centroidVector['cluster']), j)
+    for cluster, centroid_vector in enumerate(centroids):
+        encodeCentroids(circuit, centroid_vector, i, a[:]+i[:]+c[:], r[0], q, c, cluster)
  

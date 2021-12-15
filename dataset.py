@@ -111,8 +111,8 @@ class Dataset:
         #df = df.drop('f0', axis=1)
         #df = df.drop('f1', axis=1)
         
-        #df = df.sample(n=10)
-        #df.reset_index(drop=True, inplace=True)
+        df = df.sample(n=10)
+        df.reset_index(drop=True, inplace=True)
         
         df = self.scale(df)
         df = self.normalize(df)
