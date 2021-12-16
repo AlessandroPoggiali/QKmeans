@@ -10,6 +10,7 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, 
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
 from QRAM import buildCentroidState, buildVectorsState
 from utility import measures
+from dataset import Dataset
 
 class QKMeans():
     def __init__(self, dataset, conf, seed):
@@ -38,7 +39,7 @@ class QKMeans():
         self.n_circuits = 0
         
         self.ite = 0
-        self.accs = []
+        self.similarities = []
         self.times = []
         
         
@@ -69,7 +70,7 @@ class QKMeans():
         
         for j in range(self.n_circuits):
         
-            #print("Circuit " + str(j+1) + "/" + str(n_circuits))
+            print("Circuit " + str(j+1) + "/" + str(self.n_circuits))
             
             vectors = self.data[j*M1:(j+1)*M1]
             
@@ -252,14 +253,14 @@ class QKMeans():
     def run(self):
         
         #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
-        
+        self.dataset.plot2Features(self.data, 'f0', 'f1', self.centroids, cluster_assignment=None, initial_space=True, dataset_name='blobs')
         while not self.stop_condition():
             
             start = time.time()
             
             self.old_centroids = self.centroids.copy()
             
-           # print("iteration: " + str(self.ite))
+            print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
             self.computing_cluster(M1=self.M1, shots=self.shots)
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
@@ -268,15 +269,15 @@ class QKMeans():
             #centroids = computing_centroids_0(data, k)
             self.computing_centroids_0()
     
-            #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, assignment=True, initial_space=False)
-            #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, assignment=True, initial_space=True)
+            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, cluster_assignment=self.cluster_assignment, initial_space=False)
+            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, cluster_assignment=self.cluster_assignment, initial_space=True, dataset_name='blobs')
             
             end = time.time()
             elapsed = end - start
             self.times.append(elapsed)
             
             acc = measures.check_similarity(self.data, self.centroids, self.cluster_assignment)
-            self.accs.append(acc)
+            self.similarities.append(acc)
             #print("Accuracy: " + str(round(acc, 2)) + "%")
             
             
@@ -288,7 +289,7 @@ class QKMeans():
         return round(np.mean(self.times), 2)
     
     def avg_sim(self):
-        return round(np.mean(self.accs), 2)
+        return round(np.mean(self.similarities), 2)
     
     def SSE(self):
         return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
@@ -297,32 +298,49 @@ class QKMeans():
         return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
     
     def vmeasure(self):
-        return 'None'
+        if self.dataset.ground_truth is not None:
+            return round(metrics.v_measure_score(self.dataset.ground_truth, self.cluster_assignment), 3)
+        else:
+            return None
     
     def nm_info(self):
-        return 'None'
+        if self.dataset.ground_truth is not None:
+            return round(metrics.normalized_mutual_info_score(self.dataset.ground_truth, self.cluster_assignment), 3)
+        else:
+            return None
+    
+    def save_similarities(self, index):
+        filename = "result/similarity/similarity_" + str(index) + ".csv"
+        similarity_df = pd.DataFrame(self.similarities, columns=['similarity'])
+        pd.DataFrame(similarity_df).to_csv(filename)
         
     def print_result(self, filename=None, process=0, index_conf=0):
-        #self.dataset.plotOnCircle(self.data, self.centroids)
+        self.dataset.plotOnCircle(self.data, self.centroids, self.cluster_assignment)
         
         #print("")
         #print("---------------- QKMEANS RESULT ----------------")
         #print("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations))
         
-        avg_time = round(np.mean(self.times), 2)
-        #print("Average iteration time: " + str(avg_time) + " sec")
+        avg_time = self.avg_ite_time()
+        print("Average iteration time: " + str(avg_time) + " sec")
         
-        avg_acc = round(np.mean(self.accs), 2)
-        #print("Average accuracy w.r.t classical assignment: " + str(avg_acc) + "%")
+        avg_sim = self.avg_sim()
+        print("Average similarity w.r.t classical assignment: " + str(avg_sim) + "%")
         
-        SSE = measures.SSE(self.data, self.centroids, self.cluster_assignment)
-        #print("SSE: " + str(SSE))
+        SSE = self.SSE()
+        print("SSE: " + str(SSE))
         
-        silhouette = metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean')
-        #print("Silhouette score: " + str(silhouette))
+        silhouette = self.silhouette()
+        print("Silhouette score: " + str(silhouette))
+        
+        vm = self.vmeasure()
+        print("Vmeasure: " + str(vm))
+        
+        nminfo = self.nm_info()
+        print("Normalized mutual info score: " + str(nminfo))
     
         fig, ax = plt.subplots()
-        ax.plot(range(self.ite), self.accs, marker="o")
+        ax.plot(range(self.ite), self.similarities, marker="o")
         ax.set(xlabel='QKmeans iterations', ylabel='Accuracy w.r.t classical assignment')
         ax.set_title("K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots))
         #plt.show()
@@ -340,9 +358,11 @@ class QKMeans():
             f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
             f.write("# Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")
             f.write('# Average iteration time: ' + str(avg_time) + 's \n')
-            f.write('# Average similarity w.r.t classical assignment: ' + str(avg_acc) + '% \n')
+            f.write('# Average similarity w.r.t classical assignment: ' + str(avg_sim) + '% \n')
             f.write('# SSE: ' + str(SSE) + '\n')
             f.write('# Silhouette: ' + str(silhouette) + '\n')
+            f.write('# Vmeasure: ' + str(vm) + '\n')
+            f.write('# Normalized mutual info score: ' + str(nminfo) + '\n')
             f.write("# Quantum kmeans assignment \n")
             f.write(str(self.cluster_assignment))            
             f.write("\n")
@@ -355,3 +375,19 @@ class QKMeans():
               "\nParameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
 
 
+if __name__ == "__main__":
+
+    dataset = Dataset('blobs')
+    conf = {
+            "dataset_name": 'blobs',
+            "K": 3,
+            "M1": 10,
+            "sc_tresh": 0,
+            "max_iterations": 5
+        }
+    
+    QKMEANS = QKMeans(dataset, conf, 321)
+    QKMEANS.print_params()
+    QKMEANS.run()
+    QKMEANS.print_result("log/log.txt")
+    

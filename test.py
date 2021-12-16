@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 import multiprocessing as mp
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn import metrics
 from sklearn.metrics.cluster import pair_confusion_matrix
+import matplotlib.pyplot as plt
 from utility import measures
 from dataset import Dataset
 import time
@@ -94,7 +95,7 @@ def test_iris():
         f.write("\n\n")
         f.close()
         
-def par_test(params, dataset, algorithm='quantum', n_processes=2, seed=123):
+def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     
     
     keys, values = zip(*params.items())
@@ -124,14 +125,28 @@ def par_test(params, dataset, algorithm='quantum', n_processes=2, seed=123):
 
     filename = "result/" + str(params["dataset_name"][0]) + "_" + str(algorithm) + ".csv"
     f = open(filename, 'w')
-    f.write("index,date,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
+    if algorithm == "qkmeans":
+        f.write("index,date,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
+        for i in range(len(processes)):
+            f1_name  = "result/iris_qkmeans_" + str(i) + ".csv"
+            f1 = open(f1_name, "r")
+            f.write(f1.read())
+            f1.close()
+    elif algorithm == "kmeans":
+        f.write("index,date,K,M,N,n_ite,avg_ite_time,SSE,silhouette,v_measure,nm_info\n")
+        for i in range(len(processes)):
+            f1_name  = "result/iris_kmeans_" + str(i) + ".csv"
+            f1 = open(f1_name, "r")
+            f.write(f1.read())
+            f1.close()
+    else:
+        f.write("index,date,K,M,N,n_ite,avg_ite_time,SSE,silhouette,v_measure,nm_info\n")
+        for i in range(len(processes)):
+            f1_name  = "result/iris_deltakmeans_" + str(i) + ".csv"
+            f1 = open(f1_name, "r")
+            f.write(f1.read())
+            f1.close()
     
-    
-    for i in range(len(processes)):
-        f1_name  = "result/iris_qkmeans_" + str(i) + ".csv"
-        f1 = open(f1_name, "r")
-        f.write(f1.read())
-        f1.close()
     f.close()
 
 
@@ -173,15 +188,19 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         f.write(str(QKMEANS.silhouette()) + ",")
         f.write(str(QKMEANS.vmeasure()) + ",")
         f.write(str(QKMEANS.nm_info()) + "\n")
-
+        f.close()
+        
         #QKMEANS.print_result(filename, n_chunk, i)
         filename_assignment = "result/assignment/qkmeans_" + str(index) + ".csv"
         assignment_df = pd.DataFrame(QKMEANS.cluster_assignment, columns=['cluster'])
         pd.DataFrame(assignment_df).to_csv(filename_assignment)
+        
+        QKMEANS.save_similarities(index)
 
 def kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
     
     filename  = "result/iris_kmeans_" + str(n_chunk) + ".csv" 
+    f = open(filename, "w")
     
     if len(chunk)==0:
         f = open(filename, 'w')
@@ -195,38 +214,77 @@ def kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         kmeans = KMeans(n_clusters=conf['K'], n_init=1, max_iter=conf['max_iterations'], init=initial_centroids)
         
         start = time.time()
-        
         kmeans.fit(data)
-        
         end = time.time()
         elapsed = end - start
         
+        index = n_processes*n_chunk + i
+        dt = datetime.datetime.now().replace(microsecond=0)
+        
         #print("Iterations needed: " + str(kmeans.n_iter_) + "/" + str(conf['max_iterations']))
-        avg_time = elapsed / kmeans.n_iter_
+        avg_time = round((elapsed / kmeans.n_iter_), 2)
         #print('Average iteration time: ' + str(avg_time) + 's \n')
         #print('SSE kmeans %s' % kmeans.inertia_)
-        sse = measures.SSE(data, kmeans.cluster_centers_, kmeans.labels_)
-        silhouette = silhouette_score(data, kmeans.labels_, metric='euclidean')
+        sse = round(measures.SSE(data, kmeans.cluster_centers_, kmeans.labels_), 3)
+        silhouette = round(metrics.silhouette_score(data, kmeans.labels_, metric='euclidean'), 3)
+        if dataset.ground_truth is not None:
+            vmeasure = round(metrics.v_measure_score(dataset.ground_truth, kmeans.labels_), 3)
+            nm_info = round(metrics.normalized_mutual_info_score(dataset.ground_truth, kmeans.labels_), 3)
+        else:
+            vmeasure = None
+            nm_info = None
         #print('Silhouette kmeans %s' % silhouette)
-        '''
         f = open(filename, 'a')
-        f.write("## Classical KMEANS\n")
-        f.write("# Iterations needed: " + str(kmeans.n_iter_) + "/" + str(conf['max_iterations']) + "\n")
-        f.write('# Average iteration time: ' + str(avg_time) + 's \n')
-        f.write('# SSE: ' + str(sse) + '\n')
-        f.write('# Silhouette: ' + str(silhouette) + '\n')
-        f.write("# Classical Kmeans assignment\n")
-        f.write(str(kmeans.labels_.tolist()))
-        f.write("\n")
-
+        f.write(str(index) + ",")
+        f.write(str(dt) + ",")
+        f.write(str(conf['K']) + ",")
+        f.write(str(dataset.M) + ",")
+        f.write(str(dataset.N) + ",")
+        f.write(str(kmeans.n_iter_) + ",")
+        f.write(str(avg_time) + ",")
+        f.write(str(sse) + ",")
+        f.write(str(silhouette) + ",")
+        f.write(str(vmeasure) + ",")
+        f.write(str(nm_info) + "\n")
         f.close()
-        '''
+        
+        filename_assignment = "result/assignment/kmeans_" + str(index) + ".csv"
+        assignment_df = pd.DataFrame(kmeans.labels_, columns=['cluster'])
+        pd.DataFrame(assignment_df).to_csv(filename_assignment)
+        
+        
 def delta_kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
     return
     
+def plot_similarity(params, dataset):
+    
+    keys, values = zip(*params.items())
+    params_list = [dict(zip(keys, v)) for v in product(*values)]
+        
+    for i, params in enumerate(params_list):
+        
+        conf = {
+            "dataset_name": params['dataset_name'],
+            "K": params['K'],
+            "M1": params['M1'],
+            "sc_tresh": params['sc_tresh'],
+            "max_iterations": params['max_iterations'] 
+        }
+        
+        filename = "result/similarity/similarity_" + str(i) + ".csv"
+        df_sim = pd.read_csv(filename, sep=',')
+        
+        
+        fig, ax = plt.subplots()
+        ax.plot(df_sim['similarity'], marker="o")
+        ax.set(xlabel='QKmeans iterations', ylabel='Similarity w.r.t classical assignment')
+        ax.set_title("K = " + str(conf["K"]) + ", M = " + str(dataset.M) + ", N = " + str(dataset.N) + ", M1 = " + str(conf["M1"]))
+   
+        #str_dt = str(dt).replace(" ", "_")
+        fig.savefig("./plot/similarity_"+str(i) + ".png")
 
 if __name__ == "__main__":
-    
+ 
     print("---------------------- Iris Test ----------------------")
     
     params = {
@@ -243,13 +301,13 @@ if __name__ == "__main__":
     
     print("-------------------- Quantum Kmeans --------------------")
     par_test(params, dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    plot_similarity(params, dataset)
     print("-------------------- Classical Kmeans --------------------")
     par_test(params, dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     print("-------------------- Delta Kmeans --------------------")
     par_test(params, dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
-    
+
     '''
     make_comparison() # qui per esempio mi calcolo tutte le pair confusion matrix a partire dagli assegnamenti classici quantistici e delta facendo un file dove per ogni configurazione ho due confusion matrix
-    make_plot()
     '''
     
