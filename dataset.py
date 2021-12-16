@@ -9,9 +9,10 @@ from utility import qdrawer
 class Dataset:
     
     def __init__(self, dataset_name):
+        self.dataset_name = dataset_name
+        self.ground_truth = None
         self.scaler = StandardScaler()
         self.df = self.load_dataset(dataset_name)  
-        self.ground_truth = None
         self.N = len(self.df.columns)
         self.M = len(self.df)
         
@@ -24,7 +25,7 @@ class Dataset:
         return data
     
 
-    def plot2Features(self, data, x, y, centroids=None, cluster_assignment=None, initial_space=False, dataset_name=None):
+    def plot2Features(self, data, x, y, centroids=None, cluster_assignment=None, initial_space=False, dataset_name=None, seed=0):
         colors = ['b','g','r','c','m','y','k','w']    
         lw = 1
         plt.figure(figsize=(10,10))
@@ -40,7 +41,9 @@ class Dataset:
                     for i in set(cluster_assignment):
                         series.append(data.loc[[index for index, n in enumerate(cluster_assignment) if n == i]].mean())
                     centroids = pd.concat(series, axis=1).T.values
-                
+                elif centroids is not None:
+                    k = len(centroids)
+                    centroids = data.sample(n=k, random_state=seed).values
             else:
                 print("ERROR: unable to print in original features space")
                 return
@@ -149,7 +152,7 @@ class Dataset:
     SYNTETIC DATA
     '''
     def load_noisymoon(self, preprocessing=True):
-        x, y = datasets.make_moons(n_samples=1500, noise=0.05)
+        x, y = datasets.make_moons(n_samples=1500, noise=0.05, random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index

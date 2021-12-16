@@ -13,6 +13,7 @@ from utility import measures
 from dataset import Dataset
 
 class QKMeans():
+    
     def __init__(self, dataset, conf, seed):
         
         self.K = conf['K']
@@ -46,11 +47,12 @@ class QKMeans():
     '''
     Compute all distances between vectors and centroids and assign cluster to every vector in many circuits
     '''
-    def computing_cluster(self, M1, shots):
+    def computing_cluster(self):
          
         N = self.N
         M = self.M
         K = self.K
+        M1 = self.M1
         
         Aknn_qbits = 1                         # number of qbits for distance ancilla
         I_qbits = math.ceil(math.log(N,2))     # number of qubits needed to index the features
@@ -70,7 +72,7 @@ class QKMeans():
         
         for j in range(self.n_circuits):
         
-            print("Circuit " + str(j+1) + "/" + str(self.n_circuits))
+            #print("Circuit " + str(j+1) + "/" + str(self.n_circuits))
             
             vectors = self.data[j*M1:(j+1)*M1]
             
@@ -146,7 +148,7 @@ class QKMeans():
                 circuit.measure(qramindex[b], outcome[b+2+C_qbits])
     
             simulator = Aer.get_backend('qasm_simulator')
-            job = execute(circuit, simulator, shots=shots)
+            job = execute(circuit, simulator, shots=self.shots)
             result = job.result()
             counts = result.get_counts(circuit)
             #print("\nTotal counts are:",counts)
@@ -202,7 +204,7 @@ class QKMeans():
             if i in self.cluster_assignment:
                 series.append(self.data.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
             else: 
-                series.append(self.centroids[self.centroids['cluster']==i].T)
+                series.append(pd.Series(self.centroids[i].T))
                 
         df_centroids = pd.concat(series, axis=1).T
         self.centroids = self.dataset.normalize(df_centroids).values
@@ -251,26 +253,25 @@ class QKMeans():
     
     
     def run(self):
-        
         #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
-        self.dataset.plot2Features(self.data, 'f0', 'f1', self.centroids, cluster_assignment=None, initial_space=True, dataset_name='blobs')
+        #self.dataset.plot2Features(self.data, 'f0', 'f1', self.centroids, cluster_assignment=None, initial_space=True, dataset_name='blobs')
         while not self.stop_condition():
             
             start = time.time()
             
             self.old_centroids = self.centroids.copy()
             
-            print("iteration: " + str(self.ite))
+            #print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
-            self.computing_cluster(M1=self.M1, shots=self.shots)
+            self.computing_cluster()
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
             #print("Computing new centroids")
             #centroids = computing_centroids_0(data, k)
             self.computing_centroids_0()
     
-            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, cluster_assignment=self.cluster_assignment, initial_space=False)
-            self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, cluster_assignment=self.cluster_assignment, initial_space=True, dataset_name='blobs')
+            #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, cluster_assignment=self.cluster_assignment, initial_space=False)
+            #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, cluster_assignment=self.cluster_assignment, initial_space=True, dataset_name='blobs')
             
             end = time.time()
             elapsed = end - start
@@ -310,7 +311,7 @@ class QKMeans():
             return None
     
     def save_similarities(self, index):
-        filename = "result/similarity/similarity_" + str(index) + ".csv"
+        filename = "result/similarity/qkmeansSim_" + str(index) + ".csv"
         similarity_df = pd.DataFrame(self.similarities, columns=['similarity'])
         pd.DataFrame(similarity_df).to_csv(filename)
         
@@ -341,12 +342,12 @@ class QKMeans():
     
         fig, ax = plt.subplots()
         ax.plot(range(self.ite), self.similarities, marker="o")
-        ax.set(xlabel='QKmeans iterations', ylabel='Accuracy w.r.t classical assignment')
+        ax.set(xlabel='QKmeans iterations', ylabel='Similarity w.r.t classical assignment')
         ax.set_title("K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots))
         #plt.show()
         dt = datetime.datetime.now().replace(microsecond=0)
         #str_dt = str(dt).replace(" ", "_")
-        fig.savefig("./plot/acc_"+str(process)+"_"+str(index_conf)+".png")
+        fig.savefig("./plot/qkmeansSim_"+str(process)+"_"+str(index_conf)+".png")
         
         if filename is not None:
             # stampa le cose anche su file 
@@ -375,11 +376,12 @@ class QKMeans():
               "\nParameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
 
 
+'''
 if __name__ == "__main__":
 
-    dataset = Dataset('blobs')
+    dataset = Dataset('noisymoon')
     conf = {
-            "dataset_name": 'blobs',
+            "dataset_name": 'noisymoon',
             "K": 3,
             "M1": 10,
             "sc_tresh": 0,
@@ -390,4 +392,4 @@ if __name__ == "__main__":
     QKMEANS.print_params()
     QKMEANS.run()
     QKMEANS.print_result("log/log.txt")
-    
+'''

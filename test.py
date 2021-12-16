@@ -1,4 +1,5 @@
 from QKmeans import QKMeans
+from deltakmeans import DeltaKmeans
 from itertools import product
 import numpy as np
 import pandas as pd
@@ -11,6 +12,8 @@ from utility import measures
 from dataset import Dataset
 import time
 import datetime
+
+delta = 0.5
 
 def test_iris():
     
@@ -70,7 +73,7 @@ def test_iris():
         avg_time = elapsed / kmeans.n_iter_
         print('Average iteration time: ' + str(avg_time) + 's \n')
         print('SSE kmeans %s' % kmeans.inertia_)
-        silhouette = silhouette_score(data, kmeans.labels_, metric='euclidean')
+        silhouette = metrics.silhouette_score(data, kmeans.labels_, metric='euclidean')
         print('Silhouette kmeans %s' % silhouette)
         
         
@@ -164,8 +167,6 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         index = n_processes*n_chunk + i
         dt = datetime.datetime.now().replace(microsecond=0)
         
-        QKMEANS = None
-        
         # execute quantum kmenas
         QKMEANS = QKMeans(dataset, conf, seed)
         QKMEANS.print_params(n_chunk, i)
@@ -254,9 +255,46 @@ def kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         
         
 def delta_kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
-    return
+    filename  = "result/iris_deltakmeans_" + str(n_chunk) + ".csv" 
+    f = open(filename, "w")
     
-def plot_similarity(params, dataset):
+    if len(chunk)==0:
+        f = open(filename, 'w')
+        f.close()
+    
+    for i, conf in enumerate(chunk):
+
+        index = n_processes*n_chunk + i
+        dt = datetime.datetime.now().replace(microsecond=0)
+        
+        # execute delta kmenas
+        deltakmeans = DeltaKmeans(dataset, conf, delta, seed)
+        deltakmeans.print_params(n_chunk, i)
+        deltakmeans.run()        
+        
+        f = open(filename, 'a')
+        f.write(str(index) + ",")
+        f.write(str(dt) + ",")
+        f.write(str(deltakmeans.K) + ",")
+        f.write(str(deltakmeans.M) + ",")
+        f.write(str(deltakmeans.N) + ",")
+        f.write(str(deltakmeans.ite) + ",")
+        f.write(str(deltakmeans.avg_ite_time()) + ",")
+        f.write(str(deltakmeans.avg_sim()) + ",")
+        f.write(str(deltakmeans.SSE()) + ",")
+        f.write(str(deltakmeans.silhouette()) + ",")
+        f.write(str(deltakmeans.vmeasure()) + ",")
+        f.write(str(deltakmeans.nm_info()) + "\n")
+        f.close()
+        
+        #QKMEANS.print_result(filename, n_chunk, i)
+        filename_assignment = "result/assignment/deltakmeans_" + str(index) + ".csv"
+        assignment_df = pd.DataFrame(deltakmeans.cluster_assignment, columns=['cluster'])
+        pd.DataFrame(assignment_df).to_csv(filename_assignment)
+        
+        deltakmeans.save_similarities(index)
+    
+def plot_similarity(params, dataset, algorithm):
     
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
@@ -271,7 +309,12 @@ def plot_similarity(params, dataset):
             "max_iterations": params['max_iterations'] 
         }
         
-        filename = "result/similarity/similarity_" + str(i) + ".csv"
+        if algorithm == 'qkmeans':
+            strfile = "qkmeansSim"
+        elif algorithm == 'deltakmeans':
+            strfile = "deltakmeansSim"
+        
+        filename = "result/similarity/" + strfile + "_" + str(i) + ".csv"
         df_sim = pd.read_csv(filename, sep=',')
         
         
@@ -281,7 +324,7 @@ def plot_similarity(params, dataset):
         ax.set_title("K = " + str(conf["K"]) + ", M = " + str(dataset.M) + ", N = " + str(dataset.N) + ", M1 = " + str(conf["M1"]))
    
         #str_dt = str(dt).replace(" ", "_")
-        fig.savefig("./plot/similarity_"+str(i) + ".png")
+        fig.savefig("./plot/" + strfile + "_"+str(i) + ".png")
 
 if __name__ == "__main__":
  
@@ -301,11 +344,12 @@ if __name__ == "__main__":
     
     print("-------------------- Quantum Kmeans --------------------")
     par_test(params, dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
-    plot_similarity(params, dataset)
+    plot_similarity(params, dataset, algorithm='qkmeans')
     print("-------------------- Classical Kmeans --------------------")
     par_test(params, dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     print("-------------------- Delta Kmeans --------------------")
     par_test(params, dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
+    plot_similarity(params, dataset, algorithm='deltakmeans')
 
     '''
     make_comparison() # qui per esempio mi calcolo tutte le pair confusion matrix a partire dagli assegnamenti classici quantistici e delta facendo un file dove per ogni configurazione ho due confusion matrix
