@@ -25,7 +25,7 @@ class Dataset:
         return data
     
 
-    def plot2Features(self, data, x, y, centroids=None, cluster_assignment=None, initial_space=False, dataset_name=None, seed=0):
+    def plot2Features(self, data, x, y, centroids=None, cluster_assignment=None, initial_space=False, dataset_name=None, seed=0, filename=None, conf=None, algorithm=""):
         colors = ['b','g','r','c','m','y','k','w']    
         lw = 1
         plt.figure(figsize=(10,10))
@@ -41,7 +41,7 @@ class Dataset:
                     for i in set(cluster_assignment):
                         series.append(data.loc[[index for index, n in enumerate(cluster_assignment) if n == i]].mean())
                     centroids = pd.concat(series, axis=1).T.values
-                elif centroids is not None:
+                elif centroids is not None: 
                     k = len(centroids)
                     centroids = data.sample(n=k, random_state=seed).values
             else:
@@ -67,7 +67,14 @@ class Dataset:
             plt.scatter(data[x],data[y],color='y',marker="o",linewidth=lw)
             
         plt.gca().set_aspect('equal', adjustable='box')
-        plt.show()
+        
+        if conf is not None:
+            plt.title(algorithm + ": K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(conf["M1"]))
+        
+        if filename is not None:
+            plt.savefig(filename)
+        else:
+            plt.show()
     
     
     def plotOnCircle(self, data, centroids, cluster_assignment):  
@@ -150,9 +157,9 @@ class Dataset:
     
     '''
     SYNTETIC DATA
-    '''
+    '''    
     def load_noisymoon(self, preprocessing=True):
-        x, y = datasets.make_moons(n_samples=1500, noise=0.05, random_state=170)
+        x, y = datasets.make_moons(n_samples=150, noise=0.05, random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index
@@ -166,7 +173,7 @@ class Dataset:
         return df
     
     def load_blobs(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=150, random_state=8)
+        x, y = datasets.make_blobs(n_samples=10, random_state=8)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])  
         
         df['ground_truth'] = df.index
@@ -180,7 +187,7 @@ class Dataset:
         return df
         
     def load_aniso(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=1500, random_state=170)
+        x, y = datasets.make_blobs(n_samples=10, random_state=170)
         transformation = [[0.6, -0.6], [-0.4, 0.8]]
         x = np.dot(x, transformation)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
@@ -196,7 +203,7 @@ class Dataset:
         return df
         
     def load_blobs_2(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=1500, cluster_std=[1.0, 2.5, 0.5], random_state=170)
+        x, y = datasets.make_blobs(n_samples=150, cluster_std=[1.0, 2.5, 0.5], random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index

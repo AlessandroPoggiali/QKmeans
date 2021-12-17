@@ -104,7 +104,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
     
-    print("Iris dataset test, total configurations: " + str(len(params_list)))
+    print(str(dataset.dataset_name) + " dataset test, total configurations: " + str(len(params_list)))
     
     list_chunks = np.array_split(params_list, n_processes)
     if algorithm == "qkmeans":
@@ -131,21 +131,21 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     if algorithm == "qkmeans":
         f.write("index,date,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
-            f1_name  = "result/iris_qkmeans_" + str(i) + ".csv"
+            f1_name  = "result/" + str(dataset.dataset_name) + "_qkmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
             f.write(f1.read())
             f1.close()
     elif algorithm == "kmeans":
         f.write("index,date,K,M,N,n_ite,avg_ite_time,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
-            f1_name  = "result/iris_kmeans_" + str(i) + ".csv"
+            f1_name  = "result/" + str(dataset.dataset_name) + "_kmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
             f.write(f1.read())
             f1.close()
     else:
         f.write("index,date,K,M,N,n_ite,avg_ite_time,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
-            f1_name  = "result/iris_deltakmeans_" + str(i) + ".csv"
+            f1_name  = "result/" + str(dataset.dataset_name) + "_deltakmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
             f.write(f1.read())
             f1.close()
@@ -155,7 +155,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
 
 def QKmeans_test(dataset, chunk, n_chunk, seed, n_processes):
     
-    filename  = "result/iris_qkmeans_" + str(n_chunk) + ".csv" 
+    filename  = "result/" + str(dataset.dataset_name) + "_qkmeans_" + str(n_chunk) + ".csv" 
     f = open(filename, "w")
     
     if len(chunk)==0:
@@ -192,7 +192,7 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         f.close()
         
         #QKMEANS.print_result(filename, n_chunk, i)
-        filename_assignment = "result/assignment/qkmeans_" + str(index) + ".csv"
+        filename_assignment = "result/assignment/" + str(dataset.dataset_name) + "_qkmeans_" + str(index) + ".csv"
         assignment_df = pd.DataFrame(QKMEANS.cluster_assignment, columns=['cluster'])
         pd.DataFrame(assignment_df).to_csv(filename_assignment)
         
@@ -200,7 +200,7 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, n_processes):
 
 def kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
     
-    filename  = "result/iris_kmeans_" + str(n_chunk) + ".csv" 
+    filename  = "result/" + str(dataset.dataset_name) + "_kmeans_" + str(n_chunk) + ".csv" 
     f = open(filename, "w")
     
     if len(chunk)==0:
@@ -249,13 +249,13 @@ def kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         f.write(str(nm_info) + "\n")
         f.close()
         
-        filename_assignment = "result/assignment/kmeans_" + str(index) + ".csv"
+        filename_assignment = "result/assignment/" + str(dataset.dataset_name) + "_kmeans_" + str(index) + ".csv"
         assignment_df = pd.DataFrame(kmeans.labels_, columns=['cluster'])
         pd.DataFrame(assignment_df).to_csv(filename_assignment)
         
         
 def delta_kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
-    filename  = "result/iris_deltakmeans_" + str(n_chunk) + ".csv" 
+    filename  = "result/" + str(dataset.dataset_name) + "_deltakmeans_" + str(n_chunk) + ".csv" 
     f = open(filename, "w")
     
     if len(chunk)==0:
@@ -288,7 +288,7 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         f.close()
         
         #QKMEANS.print_result(filename, n_chunk, i)
-        filename_assignment = "result/assignment/deltakmeans_" + str(index) + ".csv"
+        filename_assignment = "result/assignment/" + str(dataset.dataset_name) +  "_deltakmeans_" + str(index) + ".csv"
         assignment_df = pd.DataFrame(deltakmeans.cluster_assignment, columns=['cluster'])
         pd.DataFrame(assignment_df).to_csv(filename_assignment)
         
@@ -314,8 +314,8 @@ def plot_similarity(params, dataset, algorithm):
         elif algorithm == 'deltakmeans':
             strfile = "deltakmeansSim"
         
-        filename = "result/similarity/" + strfile + "_" + str(i) + ".csv"
-        df_sim = pd.read_csv(filename, sep=',')
+        input_filename = "result/similarity/" + str(dataset.dataset_name) + "_" + strfile + "_" + str(i) + ".csv"
+        df_sim = pd.read_csv(input_filename, sep=',')
         
         
         fig, ax = plt.subplots()
@@ -324,34 +324,117 @@ def plot_similarity(params, dataset, algorithm):
         ax.set_title("K = " + str(conf["K"]) + ", M = " + str(dataset.M) + ", N = " + str(dataset.N) + ", M1 = " + str(conf["M1"]))
    
         #str_dt = str(dt).replace(" ", "_")
-        fig.savefig("./plot/" + strfile + "_"+str(i) + ".png")
+        fig.savefig("./plot/" + str(dataset.dataset_name) + "_" +  strfile + "_"+str(i) + ".png")
+
+def plot_cluster(params, dataset, algorithm, seed):
+    keys, values = zip(*params.items())
+    params_list = [dict(zip(keys, v)) for v in product(*values)]
+        
+    for i, params in enumerate(params_list):
+        
+        conf = {
+            "dataset_name": params['dataset_name'],
+            "K": params['K'],
+            "M1": params['M1'],
+            "sc_tresh": params['sc_tresh'],
+            "max_iterations": params['max_iterations'] 
+        }
+        
+        if algorithm == 'qkmeans':
+            input_filename = "result/assignment/" + str(dataset.dataset_name) + "_qkmeans" + "_" + str(i) + ".csv"
+            df_assignment = pd.read_csv(input_filename, sep=',')
+            cluster_assignment = df_assignment['cluster']
+            
+            output_filename = "plot/cluster/" + str(dataset.dataset_name) + "_qkmeans" + "_" + str(i) + ".png"
+            dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
+                                  initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
+        elif algorithm == 'deltakmeans':
+            input_filename = "result/assignment/" + str(dataset.dataset_name) + "_deltakmeans" + "_" + str(i) + ".csv"
+            df_assignment = pd.read_csv(input_filename, sep=',')
+            cluster_assignment = df_assignment['cluster']
+            
+            output_filename = "plot/cluster/"+ str(dataset.dataset_name) + "_deltakmeans" + "_" + str(i) + ".png"
+            dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
+                                  initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
+        elif algorithm == 'kmeans':
+            input_filename = "result/assignment/" + str(dataset.dataset_name) + "_kmeans" + "_" + str(i) + ".csv"
+            df_assignment = pd.read_csv(input_filename, sep=',')
+            cluster_assignment = df_assignment['cluster']
+            
+            output_filename = "plot/cluster/" + str(dataset.dataset_name) + "_kmeans" + "_" + str(i) + ".png"
+            dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
+                                  initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
+        
+        
+    
 
 if __name__ == "__main__":
- 
-    print("---------------------- Iris Test ----------------------")
     
+    '''
+    ANISO DATASET TEST
+    '''
     params = {
-        'dataset_name': ['iris'],
-        'K': [2],
+        'dataset_name': ['aniso'],
+        'K': [3],
         'M1': [2,4,8,16],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
-    
+     
     processes = 2
     seed = 123
-    dataset = Dataset('iris')
+    dataset = Dataset('aniso')
+    
+    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
     print("-------------------- Quantum Kmeans --------------------")
     par_test(params, dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     plot_similarity(params, dataset, algorithm='qkmeans')
     print("-------------------- Classical Kmeans --------------------")
     par_test(params, dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    
     print("-------------------- Delta Kmeans --------------------")
     par_test(params, dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
     plot_similarity(params, dataset, algorithm='deltakmeans')
 
+    
+    plot_cluster(params, dataset, algorithm='qkmeans', seed=seed)
+    plot_cluster(params, dataset, algorithm='deltakmeans', seed=seed)
+    plot_cluster(params, dataset, algorithm='kmeans', seed=seed)
+
     '''
     make_comparison() # qui per esempio mi calcolo tutte le pair confusion matrix a partire dagli assegnamenti classici quantistici e delta facendo un file dove per ogni configurazione ho due confusion matrix
     '''
+    
+    '''
+    BLOBS DATASET TEST
+    '''
+    params = {
+        'dataset_name': ['blobs'],
+        'K': [3],
+        'M1': [2,4,8,16],
+        'sc_tresh':  [0],
+        'max_iterations': [10]
+    }
+     
+    processes = 2
+    seed = 123
+    dataset = Dataset('blobs')
+    
+    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
+    
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(params, dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    plot_similarity(params, dataset, algorithm='qkmeans')
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(params, dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    
+    print("-------------------- Delta Kmeans --------------------")
+    par_test(params, dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
+    plot_similarity(params, dataset, algorithm='deltakmeans')
+
+    
+    plot_cluster(params, dataset, algorithm='qkmeans', seed=seed)
+    plot_cluster(params, dataset, algorithm='deltakmeans', seed=seed)
+    plot_cluster(params, dataset, algorithm='kmeans', seed=seed)
     

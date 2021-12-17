@@ -66,8 +66,9 @@ class DeltaKmeans():
             if i in self.cluster_assignment:
                 series.append(self.data.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
             else:
-                print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-                series.append(pd.Series(self.centroids[i].T))
+                old_centroid = pd.Series(self.centroids[i])
+                old_centroid = old_centroid.rename(lambda x: "f" + str(x))
+                series.append(old_centroid)
                 
         df_centroids = pd.concat(series, axis=1).T
         self.centroids = self.dataset.normalize(df_centroids).values
@@ -97,7 +98,7 @@ class DeltaKmeans():
             
             #print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
-            #self.cluster_assignment, count = self.label_with_delta_squared()
+            self.cluster_assignment, count = self.label_with_delta_squared()
             #print(count)
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
@@ -131,7 +132,10 @@ class DeltaKmeans():
         return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
     
     def silhouette(self):
-        return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
+        if len(set(self.cluster_assignment)) <= 1 :
+            return None
+        else:
+            return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
     
     def vmeasure(self):
         if self.dataset.ground_truth is not None:
@@ -146,7 +150,7 @@ class DeltaKmeans():
             return None
     
     def save_similarities(self, index):
-        filename = "result/similarity/deltakmeansSim_" + str(index) + ".csv"
+        filename = "result/similarity/" + str(self.dataset_name) + "_deltakmeansSim_" + str(index) + ".csv"
         similarity_df = pd.DataFrame(self.similarities, columns=['similarity'])
         pd.DataFrame(similarity_df).to_csv(filename)
         
@@ -156,7 +160,6 @@ class DeltaKmeans():
         #print("")
         #print("---------------- QKMEANS RESULT ----------------")
         #print("Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations))
-        
         avg_time = self.avg_ite_time()
         print("Average iteration time: " + str(avg_time) + " sec")
         

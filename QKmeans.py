@@ -196,15 +196,17 @@ class QKMeans():
     '''
     Computes the new cluster centers as the mean of the records within the same cluster
     '''
-    def computing_centroids_0(self):
+    def computing_centroids(self):
         #data = data.reset_index(drop=True)
         
         series = []
         for i in range(self.K):
             if i in self.cluster_assignment:
                 series.append(self.data.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
-            else: 
-                series.append(pd.Series(self.centroids[i].T))
+            else:
+                old_centroid = pd.Series(self.centroids[i])
+                old_centroid = old_centroid.rename(lambda x: "f" + str(x))
+                series.append(old_centroid)
                 
         df_centroids = pd.concat(series, axis=1).T
         self.centroids = self.dataset.normalize(df_centroids).values
@@ -214,7 +216,7 @@ class QKMeans():
     '''
     Computes the new cluster centers as matrix-vector products
     '''
-    def computing_centroids(self):
+    def computing_centroids_1(self):
         
         #data = data.reset_index(drop=True)
         Vt = self.data.drop('cluster', 1).T.values
@@ -268,7 +270,7 @@ class QKMeans():
     
             #print("Computing new centroids")
             #centroids = computing_centroids_0(data, k)
-            self.computing_centroids_0()
+            self.computing_centroids()
     
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, cluster_assignment=self.cluster_assignment, initial_space=False)
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, cluster_assignment=self.cluster_assignment, initial_space=True, dataset_name='blobs')
@@ -296,7 +298,10 @@ class QKMeans():
         return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
     
     def silhouette(self):
-        return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
+        if len(set(self.cluster_assignment)) <= 1 :
+            return None
+        else:
+            return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
     
     def vmeasure(self):
         if self.dataset.ground_truth is not None:
@@ -311,7 +316,7 @@ class QKMeans():
             return None
     
     def save_similarities(self, index):
-        filename = "result/similarity/qkmeansSim_" + str(index) + ".csv"
+        filename = "result/similarity/" + str(self.dataset_name) + "_qkmeansSim_" + str(index) + ".csv"
         similarity_df = pd.DataFrame(self.similarities, columns=['similarity'])
         pd.DataFrame(similarity_df).to_csv(filename)
         
