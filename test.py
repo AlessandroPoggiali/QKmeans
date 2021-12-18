@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 from utility import measures
 from dataset import Dataset
 import time
-import math
 import datetime
 import sys
 
@@ -156,7 +155,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
             f.write(f1.read())
             f1.close()
     else:
-        f.write("index,date,K,M,N,n_ite,avg_ite_time,SSE,silhouette,v_measure,nm_info\n")
+        f.write("index,date,K,M,N,n_ite,avg_ite_time,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
             f1_name  = "result/" + str(dataset.dataset_name) + "_deltakmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
@@ -341,6 +340,18 @@ def plot_similarity(params, dataset, algorithm):
    
         #str_dt = str(dt).replace(" ", "_")
         fig.savefig("./plot/" + str(dataset.dataset_name) + "_" +  strfile + "_"+str(i) + ".png")
+        
+        #Clear memory for RAM usage
+        fig.clear()
+        plt.close(fig)
+        # Clear the current axes.
+        plt.cla() 
+        # Clear the current figure.
+        plt.clf() 
+        # Closes all the figure windows.
+        plt.close('all')
+        ax.cla()
+        fig.clf()
 
 def plot_cluster(params, dataset, algorithm, seed):
     

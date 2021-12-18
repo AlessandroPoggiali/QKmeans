@@ -76,6 +76,13 @@ class Dataset:
         else:
             plt.show()
     
+        # Clear the current axes.
+        plt.cla() 
+        # Clear the current figure.
+        plt.clf() 
+        # Closes all the figure windows.
+        plt.close('all')
+    
     
     def plotOnCircle(self, data, centroids, cluster_assignment):  
         colors = ['b','g','r','c','m','y','k','w']      
