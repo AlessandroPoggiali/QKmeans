@@ -6,7 +6,6 @@ import random
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from utility import measures
-from dataset import Dataset
 
 class DeltaKmeans():
     
@@ -22,12 +21,9 @@ class DeltaKmeans():
         self.seed = seed
         self.dataset = dataset
         self.data = self.dataset.df
-        #self.data['cluster'] = 0
         self.N = self.dataset.N
         self.M = self.dataset.M
         self.centroids = self.data.sample(n=self.K, random_state=seed).values
-        #self.centroids['cluster'] = [x for x in range(self.K)]
-        self.initial_centroids = self.centroids.copy()
         self.old_centroids = None
         
         self.cluster_assignment = [0]*self.M

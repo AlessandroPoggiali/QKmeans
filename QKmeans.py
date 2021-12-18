@@ -10,7 +10,6 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, 
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
 from QRAM import buildCentroidState, buildVectorsState
 from utility import measures
-from dataset import Dataset
 
 class QKMeans():
     
@@ -26,12 +25,9 @@ class QKMeans():
         self.seed = seed
         self.dataset = dataset
         self.data = self.dataset.df
-        #self.data['cluster'] = 0
         self.N = self.dataset.N
         self.M = self.dataset.M
-        self.centroids = self.data.sample(n=self.K, random_state=seed).values
-        #self.centroids['cluster'] = [x for x in range(self.K)]
-        self.initial_centroids = self.centroids.copy()
+        self.centroids = self.data.sample(n=self.K, random_state=seed).value
         self.old_centroids = None
         
         self.cluster_assignment = [0]*self.M

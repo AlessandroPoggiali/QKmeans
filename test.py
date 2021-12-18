@@ -12,8 +12,10 @@ from utility import measures
 from dataset import Dataset
 import time
 import datetime
+import sys
 
 delta = 0.5
+seed = 123
 
 def test_iris():
     
@@ -100,6 +102,8 @@ def test_iris():
         
 def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     
+    if algorithm != 'qkmeans':
+        params['M1'] = [None]
     
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
@@ -296,6 +300,9 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
     
 def plot_similarity(params, dataset, algorithm):
     
+    if algorithm != 'qkmeans':
+        params['M1'] = [None]
+    
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
         
@@ -327,6 +334,11 @@ def plot_similarity(params, dataset, algorithm):
         fig.savefig("./plot/" + str(dataset.dataset_name) + "_" +  strfile + "_"+str(i) + ".png")
 
 def plot_cluster(params, dataset, algorithm, seed):
+    
+    if algorithm != 'qkmeans':
+        params['M1'] = [None]
+
+    
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
         
@@ -370,37 +382,50 @@ def plot_cluster(params, dataset, algorithm, seed):
 
 if __name__ == "__main__":
     
+    if len(sys.argv) != 2:
+        print("ERROR: type '" + str(sys.argv[0]) + " n_processes' to execute the test")
+        exit()
+   
+    try:
+        processes = int(sys.argv[1])
+    except ValueError:
+        print("ERROR: specify a positive integer for the number of processes")
+        exit()
+    
+    if processes < 0:
+        print("ERROR: specify a positive integer for the number of processes")
+        exit()
+
     '''
     ANISO DATASET TEST
     '''
     params = {
         'dataset_name': ['aniso'],
         'K': [3],
-        'M1': [2,4,8,16],
+        'M1': [2,4,8,16,32,64,128,150],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
-     
-    processes = 2
-    seed = 123
+    
     dataset = Dataset('aniso')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
     print("-------------------- Quantum Kmeans --------------------")
-    par_test(params, dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
-    plot_similarity(params, dataset, algorithm='qkmeans')
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    plot_similarity(dict(params), dataset, algorithm='qkmeans')
+    
     print("-------------------- Classical Kmeans --------------------")
-    par_test(params, dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     print("-------------------- Delta Kmeans --------------------")
-    par_test(params, dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
-    plot_similarity(params, dataset, algorithm='deltakmeans')
-
+    par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
+    plot_similarity(dict(params), dataset, algorithm='deltakmeans')
     
-    plot_cluster(params, dataset, algorithm='qkmeans', seed=seed)
-    plot_cluster(params, dataset, algorithm='deltakmeans', seed=seed)
-    plot_cluster(params, dataset, algorithm='kmeans', seed=seed)
+    
+    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
 
     '''
     make_comparison() # qui per esempio mi calcolo tutte le pair confusion matrix a partire dagli assegnamenti classici quantistici e delta facendo un file dove per ogni configurazione ho due confusion matrix
@@ -412,29 +437,91 @@ if __name__ == "__main__":
     params = {
         'dataset_name': ['blobs'],
         'K': [3],
-        'M1': [2,4,8,16],
+        'M1': [2,4,8,16,32,64,128,150],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
      
-    processes = 2
-    seed = 123
     dataset = Dataset('blobs')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
     print("-------------------- Quantum Kmeans --------------------")
-    par_test(params, dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
-    plot_similarity(params, dataset, algorithm='qkmeans')
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    plot_similarity(dict(params), dataset, algorithm='qkmeans')
+        
     print("-------------------- Classical Kmeans --------------------")
-    par_test(params, dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     print("-------------------- Delta Kmeans --------------------")
-    par_test(params, dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
-    plot_similarity(params, dataset, algorithm='deltakmeans')
-
+    par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
+    plot_similarity(dict(params), dataset, algorithm='deltakmeans')
     
-    plot_cluster(params, dataset, algorithm='qkmeans', seed=seed)
-    plot_cluster(params, dataset, algorithm='deltakmeans', seed=seed)
-    plot_cluster(params, dataset, algorithm='kmeans', seed=seed)
     
+    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    
+    
+    '''
+    BLOBS 2 DATASET TEST
+    '''
+    params = {
+        'dataset_name': ['blobs2'],
+        'K': [3],
+        'M1': [2,4,8,16,32,64,128,150],
+        'sc_tresh':  [0],
+        'max_iterations': [10]
+    }
+     
+    dataset = Dataset('blobs2')
+    
+    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
+    
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    plot_similarity(dict(params), dataset, algorithm='qkmeans')
+        
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    
+    print("-------------------- Delta Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
+    plot_similarity(dict(params), dataset, algorithm='deltakmeans')
+    
+    
+    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    
+    
+    '''
+    NOISYMOON DATASET TEST
+    '''
+    params = {
+        'dataset_name': ['noisymoon'],
+        'K': [3],
+        'M1': [2,4,8,16,32,64,128,150],
+        'sc_tresh':  [0],
+        'max_iterations': [10]
+    }
+     
+    dataset = Dataset('noisymoon')
+    
+    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
+    
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    plot_similarity(dict(params), dataset, algorithm='qkmeans')
+        
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    
+    print("-------------------- Delta Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)
+    plot_similarity(dict(params), dataset, algorithm='deltakmeans')
+    
+    
+    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
