@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from utility import measures
 from dataset import Dataset
 import time
+import math
 import datetime
 import sys
 
@@ -111,12 +112,20 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     print(str(dataset.dataset_name) + " dataset test, total configurations: " + str(len(params_list)))
     
     list_chunks = np.array_split(params_list, n_processes)
+    
+    t = 0
+    indexlist = [[0]*j for i,j in enumerate([len(x) for x in list_chunks])]
+    for i,index in enumerate(indexlist):
+        for j in range(len(index)):
+            indexlist[i][j] = t
+            t = t + 1
+    
     if algorithm == "qkmeans":
-        processes = [mp.Process(target=QKmeans_test, args=(dataset, chunk, i, seed, n_processes))  for i, chunk in enumerate(list_chunks)]
+        processes = [mp.Process(target=QKmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
     elif algorithm == "kmeans":
-        processes = [mp.Process(target=kmeans_test, args=(dataset, chunk, i, seed, n_processes))  for i, chunk in enumerate(list_chunks)]
+        processes = [mp.Process(target=kmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
     elif algorithm == "deltakmeans":
-        processes = [mp.Process(target=delta_kmeans_test, args=(dataset, chunk, i, seed, n_processes))  for i, chunk in enumerate(list_chunks)]
+        processes = [mp.Process(target=delta_kmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
     else: 
         print("ERROR: wrong algorithm parameter (use 'quantum', 'classical' or 'delta'")
         return
@@ -157,7 +166,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     f.close()
 
 
-def QKmeans_test(dataset, chunk, n_chunk, seed, n_processes):
+def QKmeans_test(dataset, chunk, n_chunk, seed, indexlist):
     
     filename  = "result/" + str(dataset.dataset_name) + "_qkmeans_" + str(n_chunk) + ".csv" 
     f = open(filename, "w")
@@ -168,7 +177,7 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, n_processes):
     
     for i, conf in enumerate(chunk):
 
-        index = n_processes*n_chunk + i
+        index = indexlist[n_chunk][i]
         dt = datetime.datetime.now().replace(microsecond=0)
         
         # execute quantum kmenas
@@ -202,7 +211,7 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         
         QKMEANS.save_similarities(index)
 
-def kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
+def kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
     
     filename  = "result/" + str(dataset.dataset_name) + "_kmeans_" + str(n_chunk) + ".csv" 
     f = open(filename, "w")
@@ -223,7 +232,7 @@ def kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         end = time.time()
         elapsed = end - start
         
-        index = n_processes*n_chunk + i
+        index = indexlist[n_chunk][i]
         dt = datetime.datetime.now().replace(microsecond=0)
         
         #print("Iterations needed: " + str(kmeans.n_iter_) + "/" + str(conf['max_iterations']))
@@ -258,7 +267,7 @@ def kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
         pd.DataFrame(assignment_df).to_csv(filename_assignment)
         
         
-def delta_kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
+def delta_kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
     filename  = "result/" + str(dataset.dataset_name) + "_deltakmeans_" + str(n_chunk) + ".csv" 
     f = open(filename, "w")
     
@@ -268,7 +277,7 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, n_processes):
     
     for i, conf in enumerate(chunk):
 
-        index = n_processes*n_chunk + i
+        index = indexlist[n_chunk][i]
         dt = datetime.datetime.now().replace(microsecond=0)
         
         # execute delta kmenas
