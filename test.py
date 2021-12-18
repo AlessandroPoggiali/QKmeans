@@ -500,7 +500,7 @@ if __name__ == "__main__":
     '''
     params = {
         'dataset_name': ['noisymoon'],
-        'K': [3],
+        'K': [2],
         'M1': [2,4,8,16,32,64,128,150],
         'sc_tresh':  [0],
         'max_iterations': [10]
