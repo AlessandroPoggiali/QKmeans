@@ -27,7 +27,7 @@ class QKMeans():
         self.data = self.dataset.df
         self.N = self.dataset.N
         self.M = self.dataset.M
-        self.centroids = self.data.sample(n=self.K, random_state=seed).value
+        self.centroids = self.data.sample(n=self.K, random_state=seed).values
         self.old_centroids = None
         
         self.cluster_assignment = [0]*self.M
