@@ -166,7 +166,7 @@ class Dataset:
     SYNTETIC DATA
     '''    
     def load_noisymoon(self, preprocessing=True):
-        x, y = datasets.make_moons(n_samples=150, noise=0.05, random_state=170)
+        x, y = datasets.make_moons(n_samples=500, noise=0.05, random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index
@@ -180,7 +180,7 @@ class Dataset:
         return df
     
     def load_blobs(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=150, random_state=8)
+        x, y = datasets.make_blobs(n_samples=500, random_state=8)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])  
         
         df['ground_truth'] = df.index
@@ -194,7 +194,7 @@ class Dataset:
         return df
         
     def load_aniso(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=150, random_state=170)
+        x, y = datasets.make_blobs(n_samples=500, random_state=170)
         transformation = [[0.6, -0.6], [-0.4, 0.8]]
         x = np.dot(x, transformation)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
@@ -210,7 +210,7 @@ class Dataset:
         return df
         
     def load_blobs_2(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=150, cluster_std=[1.0, 2.5, 0.5], random_state=170)
+        x, y = datasets.make_blobs(n_samples=500, cluster_std=[1.0, 2.5, 0.5], random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index
