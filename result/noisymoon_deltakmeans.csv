@@ -1,2 +1,2 @@
-index,date,K,M,N,n_ite,avg_ite_time,SSE,silhouette,v_measure,nm_info
-0,2021-12-18 16:24:22,2,150,2,8,0.0,98.25,73.661,0.537,0.416,0.416
+index,date,K,M,N,n_ite,avg_ite_time,avg_similarity,SSE,silhouette,v_measure,nm_info
+0,2021-12-19 12:44:38,2,500,2,10,0.01,95.32,243.018,0.543,0.385,0.385
