@@ -422,7 +422,7 @@ if __name__ == "__main__":
     params = {
         'dataset_name': ['aniso'],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
+        'M1': [2,4,8,16,32,64,128,256,500],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -457,7 +457,7 @@ if __name__ == "__main__":
     params = {
         'dataset_name': ['blobs'],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
+        'M1': [2,4,8,16,32,64,128,256,500],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -489,7 +489,7 @@ if __name__ == "__main__":
     params = {
         'dataset_name': ['blobs2'],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
+        'M1': [2,4,8,16,32,64,128,256,500],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -521,7 +521,7 @@ if __name__ == "__main__":
     params = {
         'dataset_name': ['noisymoon'],
         'K': [2],
-        'M1': [2,4,8,16,32,64,128,150],
+        'M1': [2,4,8,16,32,64,128,256,500],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
