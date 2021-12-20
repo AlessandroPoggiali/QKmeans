@@ -415,10 +415,12 @@ if __name__ == "__main__":
     if processes < 0:
         print("ERROR: specify a positive integer for the number of processes")
         exit()
+        
 
-    '''
-    ANISO DATASET TEST
-    '''
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                                ANISO DATASET TEST
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    
     params = {
         'dataset_name': ['aniso'],
         'K': [3],
@@ -447,13 +449,13 @@ if __name__ == "__main__":
     plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
 
-    '''
-    make_comparison() # qui per esempio mi calcolo tutte le pair confusion matrix a partire dagli assegnamenti classici quantistici e delta facendo un file dove per ogni configurazione ho due confusion matrix
-    '''
     
-    '''
-    BLOBS DATASET TEST
-    '''
+
+
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                                BLOBS DATASET TEST
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
     params = {
         'dataset_name': ['blobs'],
         'K': [3],
@@ -483,9 +485,12 @@ if __name__ == "__main__":
     plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     
     
-    '''
-    BLOBS 2 DATASET TEST
-    '''
+
+
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                                BLOBS2 DATASET TEST
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
     params = {
         'dataset_name': ['blobs2'],
         'K': [3],
@@ -515,9 +520,12 @@ if __name__ == "__main__":
     plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     
     
-    '''
-    NOISYMOON DATASET TEST
-    '''
+
+
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                                NOISYMOON DATASET TEST
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
     params = {
         'dataset_name': ['noisymoon'],
         'K': [2],

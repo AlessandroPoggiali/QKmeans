@@ -69,7 +69,7 @@ class Dataset:
         plt.gca().set_aspect('equal', adjustable='box')
         
         if conf is not None:
-            plt.title(algorithm + ": K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(conf["M1"]))
+            plt.title(algorithm + ": K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(conf["M1"]), fontdict = {'fontsize' : 25})
         
         if filename is not None:
             plt.savefig(filename)
