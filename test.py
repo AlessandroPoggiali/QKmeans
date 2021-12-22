@@ -19,7 +19,7 @@ plt.rc('font', **font)
 
 
 delta = 0.5
-seed = 1111
+seed = 123
         
 def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     
@@ -355,7 +355,7 @@ if __name__ == "__main__":
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,10],
+        'M1': [2,4,8,16,32,64,128,256,500],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
