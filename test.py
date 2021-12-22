@@ -317,7 +317,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     params = {
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
@@ -344,7 +344,7 @@ if __name__ == "__main__":
     plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
 
-    
+    '''
     
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -355,7 +355,7 @@ if __name__ == "__main__":
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,256,500],
+        'M1': [500],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
