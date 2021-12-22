@@ -5,6 +5,10 @@ from sklearn.preprocessing import StandardScaler, normalize
 import matplotlib.pyplot as plt
 from utility import qdrawer
 
+font = {'size'   : 22}
+
+plt.rc('font', **font)
+
 
 class Dataset:
     

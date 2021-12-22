@@ -11,9 +11,14 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, 
 from QRAM import buildCentroidState, buildVectorsState
 from utility import measures
 
+font = {'size'   : 22}
+
+plt.rc('font', **font)
+
+
 class QKMeans():
     
-    def __init__(self, dataset, conf, seed):
+    def __init__(self, dataset, conf):
         
         self.K = conf['K']
         self.M1 = conf['M1']
@@ -21,13 +26,12 @@ class QKMeans():
         self.dataset_name = conf['dataset_name']
         self.sc_tresh = conf['sc_tresh']
         self.max_iterations = conf['max_iterations']
-        
-        self.seed = seed
+
         self.dataset = dataset
         self.data = self.dataset.df
         self.N = self.dataset.N
         self.M = self.dataset.M
-        self.centroids = self.data.sample(n=self.K, random_state=seed).values
+        self.centroids = None
         self.old_centroids = None
         
         self.cluster_assignment = [0]*self.M
@@ -36,10 +40,13 @@ class QKMeans():
         self.n_circuits = 0
         
         self.ite = 0
-        self.similarities = []
+        self.SSE_list = []
+        self.silhouette_list = []
+        self.similarity_list = []
+        self.nm_info_list = []
         self.times = []
         
-        
+    
     '''
     Compute all distances between vectors and centroids and assign cluster to every vector in many circuits
     '''
@@ -237,8 +244,6 @@ class QKMeans():
     
     
     def stop_condition(self):
-        # ritorna true se i centroidi non cambiano piu di un tot false altrimenti
-
         if self.old_centroids is None:
             return False
 
@@ -250,7 +255,13 @@ class QKMeans():
         return True
     
     
-    def run(self):
+    def run(self, initial_centroids=None, seed=123):
+        
+        if initial_centroids is None:
+            self.centroids = self.data.sample(n=self.K, random_state=seed).values
+        else:
+            self.centroids = initial_centroids
+            
         #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
         #self.dataset.plot2Features(self.data, 'f0', 'f1', self.centroids, cluster_assignment=None, initial_space=True, dataset_name='blobs')
         while not self.stop_condition():
@@ -275,20 +286,27 @@ class QKMeans():
             elapsed = end - start
             self.times.append(elapsed)
             
-            acc = measures.check_similarity(self.data, self.centroids, self.cluster_assignment)
-            self.similarities.append(acc)
-            #print("Accuracy: " + str(round(acc, 2)) + "%")
+            
+            # computing measures
+            sim = measures.check_similarity(self.data, self.centroids, self.cluster_assignment)
+            self.similarity_list.append(sim)
+            self.SSE_list.append(self.SSE())
+            self.silhouette_list.append(self.silhouette())
+            self.nm_info_list.append(self.nm_info())
             
             
             self.ite = self.ite + 1
+            
             if self.ite == self.max_iterations:
                 break
+        
+        
         
     def avg_ite_time(self):
         return round(np.mean(self.times), 2)
     
     def avg_sim(self):
-        return round(np.mean(self.similarities), 2)
+        return round(np.mean(self.similarity_list), 2)
     
     def SSE(self):
         return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
@@ -311,10 +329,10 @@ class QKMeans():
         else:
             return None
     
-    def save_similarities(self, index):
-        filename = "result/similarity/" + str(self.dataset_name) + "_qkmeansSim_" + str(index) + ".csv"
-        similarity_df = pd.DataFrame(self.similarities, columns=['similarity'])
-        pd.DataFrame(similarity_df).to_csv(filename)
+    def save_measures(self, index):
+        filename = "result/measures/" + str(self.dataset_name) + "_qkmeans_" + str(index) + ".csv"
+        measure_df = pd.DataFrame({'similarity': self.similarity_list, 'SSE': self.SSE_list, 'silhouette': self.silhouette_list, 'nm_info': self.nm_info_list})
+        pd.DataFrame(measure_df).to_csv(filename)
         
     def print_result(self, filename=None, process=0, index_conf=0):
         self.dataset.plotOnCircle(self.data, self.centroids, self.cluster_assignment)
@@ -342,7 +360,7 @@ class QKMeans():
         print("Normalized mutual info score: " + str(nminfo))
     
         fig, ax = plt.subplots()
-        ax.plot(range(self.ite), self.similarities, marker="o")
+        ax.plot(range(self.ite), self.similarity_list, marker="o")
         ax.set(xlabel='QKmeans iterations', ylabel='Similarity w.r.t classical assignment')
         ax.set_title("K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots))
         #plt.show()

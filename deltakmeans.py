@@ -7,9 +7,13 @@ import matplotlib.pyplot as plt
 from sklearn import metrics
 from utility import measures
 
+font = {'size'   : 22}
+
+plt.rc('font', **font)
+
 class DeltaKmeans():
     
-    def __init__(self, dataset, conf, delta, seed):
+    def __init__(self, dataset, conf, delta):
         
         self.K = conf['K']
         self.dataset_name = conf['dataset_name']
@@ -18,19 +22,21 @@ class DeltaKmeans():
         
         self.delta = delta
         
-        self.seed = seed
         self.dataset = dataset
         self.data = self.dataset.df
         self.N = self.dataset.N
         self.M = self.dataset.M
-        self.centroids = self.data.sample(n=self.K, random_state=seed).values
+        self.centroids = None
         self.old_centroids = None
         
         self.cluster_assignment = [0]*self.M
         
         self.ite = 0
-        self.similarities = []
-        self.times = []     
+        self.SSE_list = []
+        self.silhouette_list = []
+        self.similarity_list = []
+        self.nm_info_list = []
+        self.times = []   
     
     def label_with_delta_squared(self): #given X (points) and centers: 2 numpy arrays
         X = self.data.values
@@ -84,7 +90,13 @@ class DeltaKmeans():
         return True
     
     
-    def run(self):
+    def run(self, initial_centroids=None, seed=123):
+        
+        if initial_centroids is None:
+            self.centroids = self.data.sample(n=self.K, random_state=seed).values
+        else:
+            self.centroids = initial_centroids
+        
         #self.dataset.plot2Features(self.data, 'f0', 'f1', self.centroids, cluster_assignment=None, initial_space=True, dataset_name=self.dataset_name, seed=self.seed)
         while not self.stop_condition():
             
@@ -109,9 +121,12 @@ class DeltaKmeans():
             elapsed = end - start
             self.times.append(elapsed)
             
-            acc = measures.check_similarity(self.data, self.centroids, self.cluster_assignment)
-            self.similarities.append(acc)
-            #print("Accuracy: " + str(round(acc, 2)) + "%")
+            # computing measures
+            sim = measures.check_similarity(self.data, self.centroids, self.cluster_assignment)
+            self.similarity_list.append(sim)
+            self.SSE_list.append(self.SSE())
+            self.silhouette_list.append(self.silhouette())
+            self.nm_info_list.append(self.nm_info())
             
             
             self.ite = self.ite + 1
@@ -122,7 +137,7 @@ class DeltaKmeans():
         return round(np.mean(self.times), 2)
     
     def avg_sim(self):
-        return round(np.mean(self.similarities), 2)
+        return round(np.mean(self.similarity_list), 2)
     
     def SSE(self):
         return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
@@ -145,10 +160,10 @@ class DeltaKmeans():
         else:
             return None
     
-    def save_similarities(self, index):
-        filename = "result/similarity/" + str(self.dataset_name) + "_deltakmeansSim_" + str(index) + ".csv"
-        similarity_df = pd.DataFrame(self.similarities, columns=['similarity'])
-        pd.DataFrame(similarity_df).to_csv(filename)
+    def save_measures(self, index):
+        filename = "result/measures/" + str(self.dataset_name) + "_deltakmeans_" + str(index) + ".csv"
+        measure_df = pd.DataFrame({'similarity': self.similarity_list, 'SSE': self.SSE_list, 'silhouette': self.silhouette_list, 'nm_info': self.nm_info_list})
+        pd.DataFrame(measure_df).to_csv(filename)
         
     def print_result(self, filename=None, process=0, index_conf=0):
         self.dataset.plotOnCircle(self.data, self.centroids, self.cluster_assignment)
@@ -175,7 +190,7 @@ class DeltaKmeans():
         print("Normalized mutual info score: " + str(nminfo))
     
         fig, ax = plt.subplots()
-        ax.plot(range(self.ite), self.similarities, marker="o")
+        ax.plot(range(self.ite), self.similarity_list, marker="o")
         ax.set(xlabel='QKmeans iterations', ylabel='Similarity w.r.t classical assignment')
         ax.set_title("K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N))
         #plt.show()
