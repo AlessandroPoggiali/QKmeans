@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import multiprocessing as mp
 from sklearn.cluster import KMeans, kmeans_plusplus
+from pyclustering.cluster.center_initializer import kmeans_plusplus_initializer
 from sklearn import metrics
 import matplotlib.pyplot as plt
 from utility import measures
@@ -25,6 +26,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     
     if algorithm != 'qkmeans':
         params['M1'] = [None]
+        params['shots'] = [None]
     
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
@@ -105,9 +107,21 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         if conf['random_init_centroids']:
             initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
         else:
+            
+            #original = dataset.load_dataset(dataset.dataset_name, preprocessing=False)
+            #initial_centroids, indices = kmeans_plusplus(original.values, n_clusters=conf['K'], random_state=seed)
+            #new_centroids = pd.DataFrame(initial_centroids, columns=dataset.df.columns)
+            #preprocessed_centroids = dataset.scale(new_centroids)
+            #preprocessed_centroids = dataset.normalize(preprocessed_centroids)
             initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
+            #initial_centroids = kmeans_plusplus_initializer(dataset.df.values, conf['K'], kmeans_plusplus_initializer.FARTHEST_CENTER_CANDIDATE).initialize()
+        #dataset.plot2Features(QKMEANS.data, 'f0', 'f1', initial_centroids, initial_space=True, dataset_name=dataset.dataset_name, filename='plot/qinit_orig_'+str(index), conf=conf, algorithm='qkmeans')
+        #dataset.plot2Features(QKMEANS.data, 'f0', 'f1', preprocessed_centroids.values, filename='plot/qinit_'+str(index), conf=conf, algorithm='qkmeans')
         
-        #dataset.plot2Features(QKMEANS.data, 'f0', 'f1', initial_centroids, initial_space=True, dataset_name=dataset.dataset_name, filename='plot/qinit_'+str(index), conf=conf, algorithm='qkmeans')
+        filename_centroids = "result/initial_centroids/" + str(dataset.dataset_name) + "_qkmeans_" + str(index) + ".csv"
+        centroids_df = pd.DataFrame(initial_centroids, columns=dataset.df.columns)
+        pd.DataFrame(centroids_df).to_csv(filename_centroids)
+        
         QKMEANS.print_params(n_chunk, i)
         
         QKMEANS.run(initial_centroids=initial_centroids)    
@@ -159,8 +173,13 @@ def kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
             initial_centroids = data.sample(n=conf['K'], random_state=seed).values
         else:
             initial_centroids, indices = kmeans_plusplus(data.values, n_clusters=conf['K'], random_state=seed)
+            #initial_centroids = kmeans_plusplus_initializer(dataset.df.values, conf['K'], kmeans_plusplus_initializer.FARTHEST_CENTER_CANDIDATE).initialize()
         
-        #dataset.plot2Features(data, 'f0', 'f1', initial_centroids, initial_space=True, dataset_name=dataset.dataset_name, filename='plot/kinit_'+str(index), conf=conf, algorithm='kmeans')
+        filename_centroids = "result/initial_centroids/" + str(dataset.dataset_name) + "_kmeans_" + str(index) + ".csv"
+        centroids_df = pd.DataFrame(initial_centroids, columns=dataset.df.columns)
+        pd.DataFrame(centroids_df).to_csv(filename_centroids)
+        #dataset.plot2Features(data, 'f0', 'f1', initial_centroids, filename='plot/kinit_'+str(index), conf=conf, algorithm='kmeans')
+        
         kmeans = KMeans(n_clusters=conf['K'], n_init=1, max_iter=conf['max_iterations'], init=initial_centroids)
         
         start = time.time()
@@ -222,8 +241,13 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
             initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
         else:
             initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
-       
-        #dataset.plot2Features(deltakmeans.data, 'f0', 'f1', initial_centroids, initial_space=True, dataset_name=dataset.dataset_name, filename='plot/deltainit_'+str(index), conf=conf, algorithm='deltameans')
+            #initial_centroids = kmeans_plusplus_initializer(dataset.df.values, conf['K'], kmeans_plusplus_initializer.FARTHEST_CENTER_CANDIDATE).initialize()
+        #dataset.plot2Features(deltakmeans.data, 'f0', 'f1', initial_centroids, filename='plot/deltainit_'+str(index), conf=conf, algorithm='deltameans')
+        filename_centroids = "result/initial_centroids/" + str(dataset.dataset_name) + "_deltakmeans_" + str(index) + ".csv"
+        centroids_df = pd.DataFrame(initial_centroids, columns=dataset.df.columns)
+        pd.DataFrame(centroids_df).to_csv(filename_centroids)
+        
+        
         deltakmeans.print_params(n_chunk, i)
         deltakmeans.run(initial_centroids=initial_centroids) 
 
@@ -248,13 +272,12 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         pd.DataFrame(assignment_df).to_csv(filename_assignment)
         
         deltakmeans.save_measures(index)
-    
+        
 
-def plot_cluster(params, dataset, algorithm, seed):
-    
+def plot_initial_centroids(params, dataset, algorithm):
     if algorithm != 'qkmeans':
         params['M1'] = [None]
-
+        params['shots'] = [None]
     
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
@@ -268,33 +291,42 @@ def plot_cluster(params, dataset, algorithm, seed):
             "sc_tresh": params['sc_tresh'],
             "max_iterations": params['max_iterations'] 
         }
+
+        input_filename = "result/initial_centroids/" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".csv"
+        df_centroids = pd.read_csv(input_filename, sep=',')
+        df_centroids = df_centroids.drop(df_centroids.columns[0], axis=1)
+        output_filename = "plot/initial_centroids/" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".png"
+        dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], df_centroids.values, filename=output_filename, conf=conf, algorithm=algorithm)
         
-        if algorithm == 'qkmeans':
-            input_filename = "result/assignment/" + str(dataset.dataset_name) + "_qkmeans" + "_" + str(i) + ".csv"
-            df_assignment = pd.read_csv(input_filename, sep=',')
-            cluster_assignment = df_assignment['cluster']
-            
-            output_filename = "plot/cluster/" + str(dataset.dataset_name) + "_qkmeans" + "_" + str(i) + ".png"
-            dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
-                                  initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
-        elif algorithm == 'deltakmeans':
-            input_filename = "result/assignment/" + str(dataset.dataset_name) + "_deltakmeans" + "_" + str(i) + ".csv"
-            df_assignment = pd.read_csv(input_filename, sep=',')
-            cluster_assignment = df_assignment['cluster']
-            
-            output_filename = "plot/cluster/"+ str(dataset.dataset_name) + "_deltakmeans" + "_" + str(i) + ".png"
-            dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
-                                  initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
-        elif algorithm == 'kmeans':
-            input_filename = "result/assignment/" + str(dataset.dataset_name) + "_kmeans" + "_" + str(i) + ".csv"
-            df_assignment = pd.read_csv(input_filename, sep=',')
-            cluster_assignment = df_assignment['cluster']
-            
-            output_filename = "plot/cluster/" + str(dataset.dataset_name) + "_kmeans" + "_" + str(i) + ".png"
-            dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
-                                  initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
+
+    
+def plot_cluster(params, dataset, algorithm, seed):
+    
+    if algorithm != 'qkmeans':
+        params['M1'] = [None]
+        params['shots'] = [None]
+    
+    keys, values = zip(*params.items())
+    params_list = [dict(zip(keys, v)) for v in product(*values)]
         
+    for i, params in enumerate(params_list):
         
+        conf = {
+            "dataset_name": params['dataset_name'],
+            "K": params['K'],
+            "M1": params['M1'],
+            "sc_tresh": params['sc_tresh'],
+            "max_iterations": params['max_iterations'] 
+        }
+
+        input_filename = "result/assignment/" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".csv"
+        df_assignment = pd.read_csv(input_filename, sep=',')
+        cluster_assignment = df_assignment['cluster']
+        
+        output_filename = "plot/cluster/" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".png"
+        dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
+                              initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
+
     
 
 if __name__ == "__main__":
@@ -317,12 +349,15 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
+    
+    
     params = {
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,256,500],
+        'M1': [16],
+        'shots': [1000,2000,4000,8000,16000,32000,64000,128000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -343,19 +378,23 @@ if __name__ == "__main__":
     plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
-
-    '''
+    plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+    
     
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    
 
     params = {
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [500],
+        'M1': [16],
+        'shots': [1000,2000,4000,8000,16000,32000,64000,128000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -376,6 +415,10 @@ if __name__ == "__main__":
     plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+    
     
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -386,7 +429,8 @@ if __name__ == "__main__":
         'dataset_name': ['blobs2'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,256,500],
+        'M1': [16],
+        'shots': [1000,2000,4000,8000,16000,32000,64000,128000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -407,8 +451,10 @@ if __name__ == "__main__":
     plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
-    
-    
+    plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+      
 
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -419,7 +465,8 @@ if __name__ == "__main__":
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
         'K': [2],
-        'M1': [2,4,8,16,32,64,128,256,500],
+        'M1': [16],
+        'shots': [1000,2000,4000,8000,16000,32000,64000,128000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -440,3 +487,6 @@ if __name__ == "__main__":
     plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    plot_initial_centroids(dict(params), dataset, algorithm='kmeans')

@@ -45,22 +45,21 @@ class Dataset:
                     for i in set(cluster_assignment):
                         series.append(data.loc[[index for index, n in enumerate(cluster_assignment) if n == i]].mean())
                     centroids = pd.concat(series, axis=1).T.values
-                elif centroids is not None: 
-                    k = len(centroids)
-                    centroids = data.sample(n=k, random_state=seed).values
+                #elif centroids is not None: 
+                    #k = len(centroids)
+                    #centroids = data.sample(n=k, random_state=seed).values
             else:
                 print("ERROR: unable to print in original features space")
                 return
-            
-            # ti rileggi il dataset ci appiccichi il cluster assignment e via
+
 
             
         if centroids is not None:
             ind = 0 
             for cluster, c in enumerate(centroids):
-                plt.plot(c[0],c[1],marker='*', color=colors[ind],markersize=30)
+                plt.plot(c[0],c[1],marker='*', color=colors[ind],markersize=40, markeredgecolor='k')
                 centroid_name = "c" + str(ind)
-                plt.annotate(centroid_name, (c[0],c[1]), fontsize=20)
+                plt.annotate(centroid_name, (c[0],c[1]), fontsize=40)
                 ind = ind + 1
                 
         if cluster_assignment is not None:

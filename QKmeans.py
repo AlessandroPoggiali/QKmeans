@@ -22,10 +22,13 @@ class QKMeans():
         
         self.K = conf['K']
         self.M1 = conf['M1']
-        self.shots = min((self.K + self.M1) * 1000, 500000)
         self.dataset_name = conf['dataset_name']
         self.sc_tresh = conf['sc_tresh']
         self.max_iterations = conf['max_iterations']
+        if conf['shots'] is None:
+            self.shots = min((self.K + self.M1) * 1000, 500000)
+        else:
+            self.shots = conf['shots']
 
         self.dataset = dataset
         self.data = self.dataset.df
