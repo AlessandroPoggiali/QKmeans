@@ -1,0 +1,2 @@
+index,date,K,M,N,n_ite,avg_ite_time,avg_similarity,SSE,silhouette,v_measure,nm_info
+0,2021-12-23 11:00:18,3,500,2,10,0.01,94.78,19.067,0.769,0.871,0.871
