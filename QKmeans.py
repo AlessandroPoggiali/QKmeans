@@ -197,6 +197,7 @@ class QKMeans():
     
             #df.loc[j*M1:(j+1)*M1-1,'cluster'] = cluster_assignment 
         self.cluster_assignment = cluster_assignment
+        return counts
             
     
     '''
@@ -257,6 +258,59 @@ class QKMeans():
         
         return True
     
+    
+    def run_shots(self, initial_centroids):
+        self.centroids = initial_centroids
+        self.probability()
+        counts = self.computing_cluster()
+        r1 = {k: counts[k] for k in counts.keys() if k.endswith('1')}
+        r0 = {k: counts[k] for k in counts.keys() if k.endswith('0')}
+        print("r1: " + str((sum(r1.values())/self.shots)*100))
+        print("r0: " + str((sum(r0.values())/self.shots)*100))
+        '''
+        print("shots: " + str(self.shots))
+        print("r1: " + str(sum(r1.values())))
+        print("r0: " + str(sum(r0.values())))
+        a0 = {k: r1[k] for k in r1.keys() if k.endswith('01')}
+        a1 = {k: r1[k] for k in r1.keys() if k.endswith('11')}
+        print("a0: " + str(sum(a0.values())))
+        print("a1: " + str(sum(a1.values())))
+        '''
+    
+    def probability(self):
+        p = 0
+        
+        I_qbits = math.ceil(math.log(self.N,2))   
+        C_qbits = math.ceil(math.log(self.K,2))    
+        QRAMINDEX_qbits = math.ceil(math.log(self.M1,2))
+        psi1 = (1/math.sqrt(2))**(I_qbits+QRAMINDEX_qbits)
+        psi2 = (1/math.sqrt(2))**(I_qbits+C_qbits)
+        print(psi1)
+        print(psi2)
+        caso1 = caso2 = 0
+        for l in range(self.M1):
+            for t in range(self.N):
+                theta = np.arcsin(self.data.iloc[l][t])
+                sintheta = np.sin(theta)
+                costheta = np.cos(theta)
+                if costheta > sintheta:
+                    caso1 = caso1 + 1
+                else:
+                    caso2 = caso2 + 1
+                p = p + abs(psi1*self.data.iloc[l][t])**2
+        for l in range(self.K):
+            for t in range(self.N):
+                theta = np.arcsin(self.data.iloc[l][t])
+                sintheta = np.sin(theta)
+                costheta = np.cos(theta)
+                if costheta > sintheta:
+                    caso1 = caso1 + 1
+                else:
+                    caso2 = caso2 + 1
+                p = p + abs(psi2*self.centroids[l][t])**2
+        print("theoretical: " + str(p))
+        print("caso cos>sin: " + str(caso1))
+        print("caso sin>cos: " + str(caso2))
     
     def run(self, initial_centroids=None, seed=123):
         

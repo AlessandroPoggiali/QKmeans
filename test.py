@@ -64,21 +64,21 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     filename = "result/" + str(params["dataset_name"][0]) + "_" + str(algorithm) + ".csv"
     f = open(filename, 'w')
     if algorithm == "qkmeans":
-        f.write("index,date,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
+        f.write("index,date,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,treshold,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
             f1_name  = "result/" + str(dataset.dataset_name) + "_qkmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
             f.write(f1.read())
             f1.close()
     elif algorithm == "kmeans":
-        f.write("index,date,K,M,N,n_ite,avg_ite_time,SSE,silhouette,v_measure,nm_info\n")
+        f.write("index,date,K,M,N,n_ite,avg_ite_time,treshold,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
             f1_name  = "result/" + str(dataset.dataset_name) + "_kmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
             f.write(f1.read())
             f1.close()
     else:
-        f.write("index,date,K,M,N,n_ite,avg_ite_time,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
+        f.write("index,date,K,M,N,n_ite,avg_ite_time,treshold,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
             f1_name  = "result/" + str(dataset.dataset_name) + "_deltakmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
@@ -139,6 +139,7 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         f.write(str(QKMEANS.max_qbits) + ",")
         f.write(str(QKMEANS.ite) + ",")
         f.write(str(QKMEANS.avg_ite_time()) + ",")
+        f.write(str(conf['sc_tresh']) + ",")
         f.write(str(QKMEANS.avg_sim()) + ",")
         f.write(str(QKMEANS.SSE()) + ",")
         f.write(str(QKMEANS.silhouette()) + ",")
@@ -180,7 +181,10 @@ def kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         pd.DataFrame(centroids_df).to_csv(filename_centroids)
         #dataset.plot2Features(data, 'f0', 'f1', initial_centroids, filename='plot/kinit_'+str(index), conf=conf, algorithm='kmeans')
         
-        kmeans = KMeans(n_clusters=conf['K'], n_init=1, max_iter=conf['max_iterations'], init=initial_centroids)
+        if conf['sc_tresh'] != 0:
+            kmeans = KMeans(n_clusters=conf['K'], n_init=1, max_iter=conf['max_iterations'], init=initial_centroids, tol=conf['sc_tresh'])
+        else:
+            kmeans = KMeans(n_clusters=conf['K'], n_init=1, max_iter=conf['max_iterations'], init=initial_centroids)
         
         start = time.time()
         kmeans.fit(data)
@@ -211,6 +215,7 @@ def kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         f.write(str(dataset.N) + ",")
         f.write(str(kmeans.n_iter_) + ",")
         f.write(str(avg_time) + ",")
+        f.write(str(conf['sc_tresh']) + ",")
         f.write(str(sse) + ",")
         f.write(str(silhouette) + ",")
         f.write(str(vmeasure) + ",")
@@ -259,6 +264,7 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         f.write(str(deltakmeans.N) + ",")
         f.write(str(deltakmeans.ite) + ",")
         f.write(str(deltakmeans.avg_ite_time()) + ",")
+        f.write(str(conf['sc_tresh']) + ",")
         f.write(str(deltakmeans.avg_sim()) + ",")
         f.write(str(deltakmeans.SSE()) + ",")
         f.write(str(deltakmeans.silhouette()) + ",")
@@ -328,8 +334,38 @@ def plot_cluster(params, dataset, algorithm, seed):
                               initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
 
     
+    
+def shots_test():
+    datasets = ['iris','noisymoon','blobs','blobs2','aniso']
+    
+    for data in datasets:
+        print(data)
+        conf = {
+            'dataset_name': data,
+            'random_init_centroids': False,
+            'K': 4,
+            'M1': 64,
+            'shots': 500,
+            'sc_tresh':  0,
+            'max_iterations': 1
+        }
+        dataset = Dataset(data)
+        
+        QKMEANS = QKMeans(dataset, conf)      
+        
+        if conf['random_init_centroids']:
+            initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
+        else:
+            initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
+        
+        QKMEANS.run_shots(initial_centroids=initial_centroids)
+
+
 
 if __name__ == "__main__":
+    
+    shots_test()
+    exit()
     
     if len(sys.argv) != 2:
         print("ERROR: type '" + str(sys.argv[0]) + " n_processes' to execute the test")
@@ -356,9 +392,9 @@ if __name__ == "__main__":
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [16],
-        'shots': [1000,2000,4000,8000,16000,32000,64000,128000],
-        'sc_tresh':  [0],
+        'M1': [100],
+        'shots': [120000],
+        'sc_tresh':  [0.1],
         'max_iterations': [10]
     }
     
@@ -382,7 +418,7 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    
+    exit()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
