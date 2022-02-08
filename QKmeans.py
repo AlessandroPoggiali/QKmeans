@@ -267,15 +267,13 @@ class QKMeans():
         r0 = {k: counts[k] for k in counts.keys() if k.endswith('0')}
         print("r1: " + str((sum(r1.values())/self.shots)*100))
         print("r0: " + str((sum(r0.values())/self.shots)*100))
-        '''
-        print("shots: " + str(self.shots))
-        print("r1: " + str(sum(r1.values())))
-        print("r0: " + str(sum(r0.values())))
+        
+
         a0 = {k: r1[k] for k in r1.keys() if k.endswith('01')}
         a1 = {k: r1[k] for k in r1.keys() if k.endswith('11')}
-        print("a0: " + str(sum(a0.values())))
-        print("a1: " + str(sum(a1.values())))
-        '''
+        print("a0: " + str((sum(a0.values())/(sum(r1.values()))*100)))
+        print("a1: " + str((sum(a1.values())/(sum(r1.values()))*100)))
+        
     
     def probability(self):
         p = 0
@@ -283,16 +281,17 @@ class QKMeans():
         I_qbits = math.ceil(math.log(self.N,2))   
         C_qbits = math.ceil(math.log(self.K,2))    
         QRAMINDEX_qbits = math.ceil(math.log(self.M1,2))
-        psi1 = (1/math.sqrt(2))**(I_qbits+QRAMINDEX_qbits)
-        psi2 = (1/math.sqrt(2))**(I_qbits+C_qbits)
-        print(psi1)
-        print(psi2)
+        #psi1 = (1/math.sqrt(2))**(I_qbits+QRAMINDEX_qbits)
+        #psi2 = (1/math.sqrt(2))**(I_qbits+C_qbits)
+        #print(psi1)
+        #print(psi2)
+        psi1 = psi2 = 1
         caso1 = caso2 = 0
         for l in range(self.M1):
             for t in range(self.N):
                 theta = np.arcsin(self.data.iloc[l][t])
-                sintheta = np.sin(theta)
-                costheta = np.cos(theta)
+                sintheta = abs(np.sin(theta))
+                costheta = abs(np.cos(theta))
                 if costheta > sintheta:
                     caso1 = caso1 + 1
                 else:
@@ -301,8 +300,8 @@ class QKMeans():
         for l in range(self.K):
             for t in range(self.N):
                 theta = np.arcsin(self.data.iloc[l][t])
-                sintheta = np.sin(theta)
-                costheta = np.cos(theta)
+                sintheta = abs(np.sin(theta))
+                costheta = abs(np.cos(theta))
                 if costheta > sintheta:
                     caso1 = caso1 + 1
                 else:

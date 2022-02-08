@@ -10,12 +10,14 @@ def indexing(circuit, Qregister, index):
         j = j+1
 
 def encodeVector(circuit, data, i, controls, rotationQubits, ancillaQubits):
+    maxrow = np.abs(data).max() 
     for j in range(len(data)): 
         # put the appropiate X gates on i qubits 
         indexing(circuit, i, j)
         # apply the controlled rotation
         #circuit.append(MCMT(RYGate(data[j]), len(controls), 1), controls[0:]+rotationQubits[0:])
-        circuit.mcry(np.arcsin(data[j]), controls, rotationQubits, ancillaQubits)
+        #circuit.mcry(2*np.arcsin(data[j]), controls, rotationQubits, ancillaQubits)
+        circuit.mcry(2*np.arcsin(data[j]/maxrow), controls, rotationQubits, ancillaQubits)
         # re-apply the appropiate X gates on i qubits
         indexing(circuit, i, j)
         circuit.barrier()

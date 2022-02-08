@@ -1,14 +1,16 @@
 import pandas as pd
 import numpy as np
 from sklearn import datasets
-from sklearn.preprocessing import StandardScaler, normalize
+from sklearn.preprocessing import StandardScaler, normalize, MinMaxScaler 
 import matplotlib.pyplot as plt
 from utility import qdrawer
+import math
 
 font = {'size'   : 22}
 
 plt.rc('font', **font)
 
+n_samlpes = 150
 
 class Dataset:
     
@@ -26,6 +28,7 @@ class Dataset:
     
     def normalize(self, data):
         data.loc[:,:] = normalize(data.loc[:,:])
+        #data = data.apply(lambda row : row/max(abs(row)), axis = 1)
         return data
     
 
@@ -129,13 +132,13 @@ class Dataset:
         #df = df.drop('f0', axis=1)
         #df = df.drop('f1', axis=1)
         
-        #df = df.sample(n=10)
+        #df = df.sample(n=64)
         #df.reset_index(drop=True, inplace=True)
         
         if preprocessing:
             df = self.scale(df)
             df = self.normalize(df)
-        
+
         # Translate the vector coordinates in the rotation angle we have to apply to the QRAM register qbit
         #df.loc[:,"f0":"f3"] = df.loc[:,"f0":"f3"].apply(np.arcsin)
         
@@ -158,7 +161,9 @@ class Dataset:
         df = pd.read_csv("data/seeds_dataset.txt", skipinitialspace=True, sep=',')
         # drop class column
         df = df.drop('class', 1)
-                
+        df.columns = ["f0","f1","f2","f3","f4", "f5", "f6"]
+        df["f7"] = df["f0"]
+        df = df.sample(n=64)
         if preprocessing:
             df = self.scale(df)
             df = self.normalize(df)
@@ -169,7 +174,7 @@ class Dataset:
     SYNTETIC DATA
     '''    
     def load_noisymoon(self, preprocessing=True):
-        x, y = datasets.make_moons(n_samples=64, noise=0.05, random_state=170)
+        x, y = datasets.make_moons(n_samples=n_samlpes, noise=0.05, random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index
@@ -180,10 +185,12 @@ class Dataset:
         if preprocessing:
             df = self.scale(df)
             df = self.normalize(df)
+            #scaler = MinMaxScaler(feature_range=(math.sqrt(2)/2, 1))
+            #df.loc[:,:] = scaler.fit_transform(df.loc[:,:])
         return df
     
     def load_blobs(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=64, random_state=8)
+        x, y = datasets.make_blobs(n_samples=n_samlpes, random_state=8)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])  
         
         df['ground_truth'] = df.index
@@ -194,10 +201,12 @@ class Dataset:
         if preprocessing:
             df = self.scale(df)
             df = self.normalize(df)
+            #scaler = MinMaxScaler(feature_range=(math.sqrt(2)/2, 1))
+            #df.loc[:,:] = scaler.fit_transform(df.loc[:,:])
         return df
         
     def load_aniso(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=64, random_state=170)
+        x, y = datasets.make_blobs(n_samples=n_samlpes, random_state=170)
         transformation = [[0.6, -0.6], [-0.4, 0.8]]
         x = np.dot(x, transformation)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
@@ -210,10 +219,12 @@ class Dataset:
         if preprocessing:
             df = self.scale(df)
             df = self.normalize(df)
+            #scaler = MinMaxScaler(feature_range=(math.sqrt(2)/2, 1))
+            #df.loc[:,:] = scaler.fit_transform(df.loc[:,:])
         return df
         
     def load_blobs_2(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=64, cluster_std=[1.0, 2.5, 0.5], random_state=170)
+        x, y = datasets.make_blobs(n_samples=n_samlpes, cluster_std=[1.0, 2.5, 0.5], random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index
@@ -224,5 +235,7 @@ class Dataset:
         if preprocessing:
             df = self.scale(df)
             df = self.normalize(df)
+            #scaler = MinMaxScaler(feature_range=(math.sqrt(2)/2, 1))
+            #df.loc[:,:] = scaler.fit_transform(df.loc[:,:])
         return df
         

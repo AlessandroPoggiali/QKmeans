@@ -336,16 +336,16 @@ def plot_cluster(params, dataset, algorithm, seed):
     
     
 def shots_test():
-    datasets = ['iris','noisymoon','blobs','blobs2','aniso']
-    
+    datasets = ['noisymoon','blobs','blobs2','aniso']
+    #datasets = ['iris']
     for data in datasets:
         print(data)
         conf = {
             'dataset_name': data,
             'random_init_centroids': False,
-            'K': 4,
-            'M1': 64,
-            'shots': 500,
+            'K': 3,
+            'M1': 150,
+            'shots': 1024,
             'sc_tresh':  0,
             'max_iterations': 1
         }
@@ -364,8 +364,8 @@ def shots_test():
 
 if __name__ == "__main__":
     
-    shots_test()
-    exit()
+    #shots_test()
+    #exit()
     
     if len(sys.argv) != 2:
         print("ERROR: type '" + str(sys.argv[0]) + " n_processes' to execute the test")
@@ -392,9 +392,9 @@ if __name__ == "__main__":
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [100],
-        'shots': [120000],
-        'sc_tresh':  [0.1],
+        'M1': [2,4,8,16,32,64,128,150],
+        'shots': [None],
+        'sc_tresh':  [0],
         'max_iterations': [10]
     }
     
@@ -429,8 +429,8 @@ if __name__ == "__main__":
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [16],
-        'shots': [1000,2000,4000,8000,16000,32000,64000,128000],
+        'M1': [2,4,8,16,32,64,128,150],
+        'shots': [None],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -465,8 +465,8 @@ if __name__ == "__main__":
         'dataset_name': ['blobs2'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [16],
-        'shots': [1000,2000,4000,8000,16000,32000,64000,128000],
+        'M1': [2,4,8,16,32,64,128,150],
+        'shots': [None],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
@@ -501,8 +501,8 @@ if __name__ == "__main__":
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
         'K': [2],
-        'M1': [16],
-        'shots': [1000,2000,4000,8000,16000,32000,64000,128000],
+        'M1': [2,4,8,16,32,64,128,150],
+        'shots': [None],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
