@@ -1,0 +1,2 @@
+index,date,K,M,N,n_ite,avg_ite_time,treshold,avg_similarity,SSE,silhouette,v_measure,nm_info
+0,2022-02-08 18:58:38,3,150,4,10,0.01,0,94.67,32.757,0.547,None,None

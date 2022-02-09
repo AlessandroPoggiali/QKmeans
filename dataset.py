@@ -190,7 +190,7 @@ class Dataset:
         return df
     
     def load_blobs(self, preprocessing=True):
-        x, y = datasets.make_blobs(n_samples=n_samlpes, random_state=8)
+        x, y = datasets.make_blobs(n_samples=n_samlpes, random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])  
         
         df['ground_truth'] = df.index
