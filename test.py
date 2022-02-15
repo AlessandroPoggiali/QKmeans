@@ -434,7 +434,7 @@ if __name__ == "__main__":
         'random_init_centroids': [False],
         'K': [3],
         'M1': [150],
-        'shots': [150000],
+        'shots': [50000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
