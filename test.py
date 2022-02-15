@@ -427,7 +427,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     
     params = {
         'dataset_name': ['iris'],
@@ -460,6 +460,7 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
 
     exit()
+    '''
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
@@ -506,13 +507,13 @@ if __name__ == "__main__":
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2],
-        'shots': [2048],
+        'M1': [150],
+        'shots': [50000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
      
-    dataset = Dataset('blobs', 'z-norm')
+    dataset = Dataset('blobs', '1-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
