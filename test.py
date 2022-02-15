@@ -13,6 +13,7 @@ from dataset import Dataset
 import time
 import datetime
 import sys
+import math
 
 font = {'size'   : 22}
 
@@ -336,29 +337,70 @@ def plot_cluster(params, dataset, algorithm, seed):
     
 def shots_test():
     datasets = ['noisymoon','blobs','blobs2','aniso']
-    #datasets = ['iris']
+    datasets = ['blobs', 'iris']
     for data in datasets:
-        print(data)
-        conf = {
-            'dataset_name': data,
-            'random_init_centroids': False,
-            'K': 3,
-            'M1': 150,
-            'shots': 1024,
-            'sc_tresh':  0,
-            'max_iterations': 1
+        params = {
+            'dataset_name': [data],
+            'random_init_centroids': [False],
+            'K': [3],
+            'M1': [2,4,8,16,32,64,128,150],
+            'shots': [8192],
+            'sc_tresh':  [0],
+            'max_iterations': [1]
         }
-        dataset = Dataset(data)
         
-        QKMEANS = QKMeans(dataset, conf)      
+        keys, values = zip(*params.items())
+        params_list = [dict(zip(keys, v)) for v in product(*values)]
         
-        if conf['random_init_centroids']:
-            initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
-        else:
-            initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
-        
-        QKMEANS.run_shots(initial_centroids=initial_centroids)
+        filename = "result/probabilities/" + data + ".csv"
 
+        probabilities = pd.DataFrame(columns=['M1','N','K','p(R=1)_theo','p(R=1)_1-norm','p(R=1)_inf-norm'])
+
+        for i, params in enumerate(params_list):
+        
+            conf = {
+                "dataset_name": params['dataset_name'],
+                "random_init_centroids": params['random_init_centroids'],
+                "K": params['K'],
+                "M1": params['M1'],
+                'shots': params['shots'],
+                "sc_tresh": params['sc_tresh'],
+                "max_iterations": params['max_iterations'] 
+            }
+            
+            
+            dataset = Dataset(data, '1-norm')
+            QKMEANS = QKMeans(dataset, conf)      
+            
+            QKMEANS.print_params(0, i)
+            print("1-norm")
+            
+            if conf['random_init_centroids']:
+                initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
+            else:
+                initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
+            
+            r1_1norm = QKMEANS.run_shots(initial_centroids=initial_centroids)
+            
+            dataset = Dataset(data, 'inf-norm')
+            QKMEANS = QKMeans(dataset, conf)      
+            
+            QKMEANS.print_params(0, i)
+            print("inf-norm")
+            
+            if conf['random_init_centroids']:
+                initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
+            else:
+                initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
+            
+            r1_infnorm = QKMEANS.run_shots(initial_centroids=initial_centroids)
+            
+            r1_theo = 1/2**(math.ceil(math.log(dataset.N,2)))
+            
+            df1 = {'M1': conf['M1'], 'N': dataset.N, 'K': conf['K'], 'p(R=1)_theo': r1_theo ,'p(R=1)_1-norm': r1_1norm ,'p(R=1)_inf-norm': r1_infnorm }
+            probabilities = probabilities.append(df1, ignore_index = True)
+            
+        pd.DataFrame(probabilities).to_csv(filename)
 
 
 if __name__ == "__main__":
@@ -391,13 +433,13 @@ if __name__ == "__main__":
         'dataset_name': ['iris'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
-        'shots': [None],
+        'M1': [150],
+        'shots': [150000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
     
-    dataset = Dataset('iris')
+    dataset = Dataset('iris', '1-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -422,7 +464,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     
     params = {
         'dataset_name': ['aniso'],
@@ -434,7 +476,7 @@ if __name__ == "__main__":
         'max_iterations': [10]
     }
     
-    dataset = Dataset('aniso')
+    dataset = Dataset('aniso', 'z-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -454,7 +496,7 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-
+    '''
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -465,12 +507,12 @@ if __name__ == "__main__":
         'random_init_centroids': [False],
         'K': [3],
         'M1': [2],
-        'shots': [None],
+        'shots': [2048],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
      
-    dataset = Dataset('blobs')
+    dataset = Dataset('blobs', 'z-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -491,6 +533,8 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
     
+    exit()
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS2 DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -505,7 +549,7 @@ if __name__ == "__main__":
         'max_iterations': [10]
     }
      
-    dataset = Dataset('blobs2')
+    dataset = Dataset('blobs2', 'z-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -541,7 +585,7 @@ if __name__ == "__main__":
         'max_iterations': [10]
     }
      
-    dataset = Dataset('noisymoon')
+    dataset = Dataset('noisymoon', 'z-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     

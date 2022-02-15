@@ -53,8 +53,11 @@ class QKMeans():
     '''
     Compute all distances between vectors and centroids and assign cluster to every vector in many circuits
     '''
-    def computing_cluster(self):
+    def computing_cluster(self, check_prob=False):
          
+        if check_prob:
+            r1_list = []
+        
         N = self.N
         M = self.M
         K = self.K
@@ -62,7 +65,10 @@ class QKMeans():
         
         Aknn_qbits = 1                         # number of qbits for distance ancilla
         I_qbits = math.ceil(math.log(N,2))     # number of qubits needed to index the features
-        C_qbits = math.ceil(math.log(K,2))     # number of qbits needed for indexing all centroids
+        if K == 1:
+            C_qbits = 1
+        else:
+            C_qbits = math.ceil(math.log(K,2))     # number of qbits needed for indexing all centroids
         Rqram_qbits = 1                        # number of qbits for qram register
         
         a = QuantumRegister(Aknn_qbits, 'a')   # ancilla qubit for distance
@@ -160,6 +166,13 @@ class QKMeans():
             #print("\nTotal counts are:",counts)
             #plot_histogram(counts)
             # qram-classe-ancilla-registro
+            
+            if check_prob:
+                r1 = {k: counts[k] for k in counts.keys() if k.endswith('1')}
+                r1_perc = (sum(r1.values())/self.shots)*100
+                r1_list.append(r1_perc)
+            
+            
             goodCounts = {k: counts[k] for k in counts.keys() if k.endswith('01')} 
             #plot_histogram(goodCounts)
     
@@ -197,7 +210,10 @@ class QKMeans():
     
             #df.loc[j*M1:(j+1)*M1-1,'cluster'] = cluster_assignment 
         self.cluster_assignment = cluster_assignment
-        return counts
+        
+        if check_prob:
+            return sum(r1_list) / len(r1_list)
+        
             
     
     '''
@@ -261,8 +277,9 @@ class QKMeans():
     
     def run_shots(self, initial_centroids):
         self.centroids = initial_centroids
-        self.probability()
-        counts = self.computing_cluster()
+        print("theoretical postselection probability " + str(1/2**(math.ceil(math.log(self.N,2)))))
+        '''
+        counts = self.computing_cluster(check_prob=True)
         r1 = {k: counts[k] for k in counts.keys() if k.endswith('1')}
         r0 = {k: counts[k] for k in counts.keys() if k.endswith('0')}
         print("r1: " + str((sum(r1.values())/self.shots)*100))
@@ -273,43 +290,14 @@ class QKMeans():
         a1 = {k: r1[k] for k in r1.keys() if k.endswith('11')}
         print("a0: " + str((sum(a0.values())/(sum(r1.values()))*100)))
         print("a1: " + str((sum(a1.values())/(sum(r1.values()))*100)))
-        
+        return str((sum(r1.values())/self.shots)*100)  
+        '''
+        r1 = round(self.computing_cluster(check_prob=True), 3)
+        print("r1: " + str(r1))
+        return r1
     
-    def probability(self):
-        p = 0
+
         
-        I_qbits = math.ceil(math.log(self.N,2))   
-        C_qbits = math.ceil(math.log(self.K,2))    
-        QRAMINDEX_qbits = math.ceil(math.log(self.M1,2))
-        #psi1 = (1/math.sqrt(2))**(I_qbits+QRAMINDEX_qbits)
-        #psi2 = (1/math.sqrt(2))**(I_qbits+C_qbits)
-        #print(psi1)
-        #print(psi2)
-        psi1 = psi2 = 1
-        caso1 = caso2 = 0
-        for l in range(self.M1):
-            for t in range(self.N):
-                theta = np.arcsin(self.data.iloc[l][t])
-                sintheta = abs(np.sin(theta))
-                costheta = abs(np.cos(theta))
-                if costheta > sintheta:
-                    caso1 = caso1 + 1
-                else:
-                    caso2 = caso2 + 1
-                p = p + abs(psi1*self.data.iloc[l][t])**2
-        for l in range(self.K):
-            for t in range(self.N):
-                theta = np.arcsin(self.data.iloc[l][t])
-                sintheta = abs(np.sin(theta))
-                costheta = abs(np.cos(theta))
-                if costheta > sintheta:
-                    caso1 = caso1 + 1
-                else:
-                    caso2 = caso2 + 1
-                p = p + abs(psi2*self.centroids[l][t])**2
-        print("theoretical: " + str(p))
-        print("caso cos>sin: " + str(caso1))
-        print("caso sin>cos: " + str(caso2))
     
     def run(self, initial_centroids=None, seed=123):
         
