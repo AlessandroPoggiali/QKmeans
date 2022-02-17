@@ -427,7 +427,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     
     params = {
         'dataset_name': ['iris'],
@@ -439,8 +439,7 @@ if __name__ == "__main__":
         'max_iterations': [10]
     }
     
-    dataset = Dataset('iris', '1-norm')
-    print(dataset.df)
+    dataset = Dataset('iris', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -459,9 +458,8 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-
-    exit()
     
+    '''
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
@@ -535,11 +533,13 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
     
-    exit()
+    
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS2 DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+    '''
 
     params = {
         'dataset_name': ['blobs2'],
@@ -571,7 +571,7 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
       
-
+    '''
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 NOISYMOON DATASET TEST
@@ -581,13 +581,13 @@ if __name__ == "__main__":
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
         'K': [2],
-        'M1': [2,4,8,16,32,64,128,150],
-        'shots': [None],
+        'M1': [150],
+        'shots': [50000],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
      
-    dataset = Dataset('noisymoon', 'z-norm')
+    dataset = Dataset('noisymoon', '1-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     

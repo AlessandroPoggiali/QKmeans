@@ -160,6 +160,7 @@ class QKMeans():
                 circuit.measure(qramindex[b], outcome[b+2+C_qbits])
     
             simulator = Aer.get_backend('qasm_simulator')
+            simulator.set_options(device='CPU')
             job = execute(circuit, simulator, shots=self.shots)
             result = job.result()
             counts = result.get_counts(circuit)
@@ -309,7 +310,6 @@ class QKMeans():
         #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
         #self.dataset.plot2Features(self.data, 'f0', 'f1', self.centroids, cluster_assignment=None, initial_space=True, dataset_name='blobs')
         while not self.stop_condition():
-            
             start = time.time()
             
             self.old_centroids = self.centroids.copy()
