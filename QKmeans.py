@@ -8,7 +8,7 @@ from sklearn import metrics
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
 #from qiskit.circuit.library import MCMT, RYGate
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
-from QRAM import buildCentroidState, buildVectorsState
+from QRAM import buildCentroidState, buildVectorsState, encodeVector
 from utility import measures
 
 font = {'size'   : 22}
@@ -29,7 +29,7 @@ class QKMeans():
             self.shots = min((self.K + self.M1) * 1000, 500000)
         else:
             self.shots = conf['shots']
-
+        self.quantization = conf['quantization']
         self.dataset = dataset
         self.data = self.dataset.df
         self.N = self.dataset.N
@@ -49,11 +49,171 @@ class QKMeans():
         self.nm_info_list = []
         self.times = []
         
+    '''
+    Computes the quantum distances between all vectors and all centroids "sequentially": for each vector it computes the 
+    quantum euclidian distance with a single centroid for all centroids
+    '''
+    def computing_cluster_1(self):
+    
+        distances = []                         # list of distances: the i-th item is a list of distances between i-th vector and all centroids 
+        
+        N = self.N
+
+        Rqram_qbits = 1                        # number of qbits for qram register
+        Aknn_qbits = 1                         # number of qbits for distance ancilla
+        I_qbits = math.ceil(math.log(N,2))     # number of qubits needed to index the features
+        Aqram_qbits = I_qbits + Aknn_qbits - 2 # number of qbits for qram ancillas
+        self.max_qbits = I_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits
+        #print("total qbits needed:  " + str(Tot_qbits))
+        
+        a = QuantumRegister(1, 'a')            # ancilla qubit for distance
+        i = QuantumRegister(I_qbits, 'i')      # feature index
+        r = QuantumRegister(1, 'r')            # rotation qubit for vector's features
+        if Aqram_qbits > 0:
+            q = QuantumRegister(Aqram_qbits, 'q')  # qram ancilla
+    
+        outcome = ClassicalRegister(2, 'bit')  # for measuring
+    
+        for index_v, vector in self.dataset.df.iterrows():
+            centroid_distances = []            # list of distances between the current vector and all centroids
+            for index_c in range(len(self.centroids)):
+        
+                if Aqram_qbits > 0:
+                    circuit = QuantumCircuit(a, i, r, q, outcome)
+                else:
+                    circuit = QuantumCircuit(a, i, r, outcome)
+                    q = None
+        
+                circuit.h(a)
+                circuit.h(i)
+    
+                #-------------- states preparation  -----------------------#
+    
+                encodeVector(circuit, self.centroids[index_c], i, a[:]+i[:], r[0], q)  # sample vector encoding in QRAM
+    
+                circuit.x(a)
+    
+                encodeVector(circuit, vector, i, a[:]+i[:], r[0], q)    # centroid vector encoding in QRAM
+    
+                #----------------------------------------------------------#
+                circuit.measure(r,outcome[0])
+    
+                circuit.h(a)
+    
+                circuit.measure(a,outcome[1])
+    
+                shots = self.shots
+                
+                simulator = Aer.get_backend('qasm_simulator')
+                job = execute(circuit, simulator, shots=shots)
+                result = job.result()
+                counts = result.get_counts(circuit)
+                #print("\nTotal counts are:",counts)
+                #plot_histogram(counts)
+                goodCounts = {k: counts[k] for k in counts.keys() & {'01','11'}}
+                #plot_histogram(goodCounts)
+                try:
+                    n_p0 = goodCounts['01']
+                except:
+                    n_p0 = 0
+                euclidian = 4-4*(n_p0/sum(goodCounts.values()))
+                euclidian = math.sqrt(euclidian)
+
+                centroid_distances.append(euclidian)
+                
+            distances.append(centroid_distances)
+        
+        self.cluster_assignment = [(i.index(min(i))) for i in distances] # for each vector takes the closest centroid to perform the assignemnt
+    
+    
+    def computing_cluster_2(self):
+        
+        N = self.N
+        K = self.K
+        
+        Aknn_qbits = 1                         # number of qbits for distance ancilla
+        I_qbits = math.ceil(math.log(N,2))     # number of qubits needed to index the features
+        if K == 1:
+            C_qbits = 1
+        else:
+            C_qbits = math.ceil(math.log(K,2))     # number of qbits needed for indexing all centroids
+        Rqram_qbits = 1                        # number of qbits for qram register
+        Aqram_qbits = I_qbits + C_qbits + Aknn_qbits - 2 # number of qbits for qram ancillas
+        self.max_qbits = I_qbits + C_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits
+        #print("total qbits needed:  " + str(Tot_qbits))
+        
+        a = QuantumRegister(Aknn_qbits, 'a')   # ancilla qubit for distance
+        i = QuantumRegister(I_qbits, 'i')      # feature index
+        c = QuantumRegister(C_qbits, 'c')      # cluster
+        r = QuantumRegister(1, 'r')            # rotation qubit for vector's features
+        if Aqram_qbits > 0:
+            q = QuantumRegister(Aqram_qbits, 'q')  # qram ancilla
+    
+        classical_bit = C_qbits + 2            # C_qbits for clusters + 1 for measuring ancilla + 1 for measuring register    
+        outcome = ClassicalRegister(classical_bit, 'bit')  # for measuring
+        
+        cluster_assignment = []
+        
+        for index_v, vector in self.dataset.df.iterrows():
+            
+            if Aqram_qbits > 0:
+                circuit = QuantumCircuit(a, i, r, q, c, outcome)
+            else:
+                circuit = QuantumCircuit(a, i, r, c, outcome)
+                q = None
+            
+            circuit.h(a)
+            circuit.h(i)
+            circuit.h(c)
+            
+    
+            #--------------------- data vetcor encoding  -----------------------------#
+    
+            encodeVector(circuit, vector, i, a[:]+i[:], r[0], q)
+    
+            #-------------------------------------------------------------------------#
+    
+            circuit.x(a)
+            circuit.barrier()
+    
+            #--------------- centroid vectors encoding -------------------------------#
+    
+            buildCentroidState(self.centroids, circuit, a, i, c, r, q)
+    
+            #----------------------------------------------------------------#
+            circuit.measure(r, outcome[0])
+    
+            circuit.h(a) 
+    
+            circuit.measure(a, outcome[1])
+             
+            for b in range(C_qbits):
+                circuit.measure(c[b], outcome[b+2])
+            
+            shots = self.shots
+            simulator = Aer.get_backend('qasm_simulator')
+            job = execute(circuit, simulator, shots=shots)
+            result = job.result()
+            counts = result.get_counts(circuit)
+            #print("\nTotal counts are:",counts)
+            #plot_histogram(counts)
+            goodCounts = {k: counts[k] for k in counts.keys() if k.endswith('01')} # register 1 and ancilla 0
+            cluster = max(goodCounts, key=goodCounts.get)
+            #print(goodCounts)
+            cluster = int(cluster[:C_qbits], 2)
+            
+            if cluster >= K:
+                cluster = 0 
+            cluster_assignment.append(cluster)
+            #print("assigned to cluster: " + str(cluster))
+             
+
+        self.cluster_assignment = cluster_assignment 
     
     '''
     Compute all distances between vectors and centroids and assign cluster to every vector in many circuits
     '''
-    def computing_cluster(self, check_prob=False):
+    def computing_cluster_3(self, check_prob=False):
          
         if check_prob:
             r1_list = []
@@ -160,7 +320,6 @@ class QKMeans():
                 circuit.measure(qramindex[b], outcome[b+2+C_qbits])
     
             simulator = Aer.get_backend('qasm_simulator')
-            simulator.set_options(device='CPU')
             job = execute(circuit, simulator, shots=self.shots)
             result = job.result()
             counts = result.get_counts(circuit)
@@ -236,34 +395,6 @@ class QKMeans():
         self.centroids = self.dataset.normalize(df_centroids).values
 
 
-    
-    '''
-    Computes the new cluster centers as matrix-vector products
-    '''
-    def computing_centroids_1(self):
-        
-        #data = data.reset_index(drop=True)
-        Vt = self.data.drop('cluster', 1).T.values
-        car_vectors = []
-        for i in range(self.K):
-            v = np.zeros(len(self.data))
-            index = self.data[self.data['cluster']==i].index
-            v[index] = 1
-            v = v/len(index)
-            car_vectors.append(v)
-        
-        # compute matrix-vector products
-        newcentroids = []
-        for i in range(self.K):
-            c = Vt@car_vectors[i] 
-            newcentroids.append(np.append(c, i))
-        
-        self.centroids = pd.DataFrame(data=newcentroids, columns=self.data.columns)
-        # normalize centroid
-        #centroids.loc[:,centroids.columns[:-1]] = normalize(centroids.loc[:,centroids.columns[:-1]])    
-        self.centroids.loc[:, self.centroids.columns[:-1]] = self.dataset.normalize(self.centroids.loc[:,self.centroids.columns[:-1]])
-    
-    
     def stop_condition(self):
         if self.old_centroids is None:
             return False
@@ -316,7 +447,12 @@ class QKMeans():
             
             #print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
-            self.computing_cluster()
+            if self.quantization == 1:
+                self.computing_cluster_1()
+            elif self.quantization == 2:
+                self.computing_cluster_2()
+            else:
+                self.computing_cluster_3()
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
             #print("Computing new centroids")

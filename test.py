@@ -28,6 +28,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     if algorithm != 'qkmeans':
         params['M1'] = [None]
         params['shots'] = [None]
+        params['quantization'] = [None]
     
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
@@ -65,7 +66,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     filename = "result/" + str(params["dataset_name"][0]) + "_" + str(algorithm) + ".csv"
     f = open(filename, 'w')
     if algorithm == "qkmeans":
-        f.write("index,date,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,treshold,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
+        f.write("index,date,q_v,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,treshold,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
             f1_name  = "result/" + str(dataset.dataset_name) + "_qkmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
@@ -131,6 +132,7 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         f = open(filename, 'a')
         f.write(str(index) + ",")
         f.write(str(dt) + ",")
+        f.write(str(conf['quantization']) + ",")
         f.write(str(QKMEANS.K) + ",")
         f.write(str(QKMEANS.M) + ",")
         f.write(str(QKMEANS.N) + ",")
@@ -427,19 +429,20 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     
     params = {
+        'quantization': [2],
         'dataset_name': ['iris'],
         'random_init_centroids': [False],
         'K': [3],
         'M1': [150],
-        'shots': [50000],
+        'shots': [8192],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
     
-    dataset = Dataset('iris', 'inf-norm')
+    dataset = Dataset('iris', '1-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -459,7 +462,7 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    '''
+    exit()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
@@ -503,16 +506,17 @@ if __name__ == "__main__":
     
 
     params = {
+        'quantization': [2],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [150],
-        'shots': [50000],
+        'M1': [128],
+        'shots': [8192],
         'sc_tresh':  [0],
         'max_iterations': [10]
     }
      
-    dataset = Dataset('blobs', '1-norm')
+    dataset = Dataset('blobs', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -532,7 +536,7 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    
+    exit()
     
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''

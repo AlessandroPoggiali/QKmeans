@@ -1,5 +1,3 @@
-import numpy as np
-
 def indexing(circuit, Qregister, index):
     size = Qregister.size
     xored = index ^ (pow(2, size) - 1)
@@ -10,7 +8,6 @@ def indexing(circuit, Qregister, index):
         j = j+1
 
 def encodeVector(circuit, data, i, controls, rotationQubits, ancillaQubits):
-    maxrow = np.abs(data).max() 
     for j in range(len(data)): 
         # put the appropiate X gates on i qubits 
         indexing(circuit, i, j)
