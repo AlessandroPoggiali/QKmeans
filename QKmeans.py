@@ -243,8 +243,8 @@ class QKMeans():
         cluster_assignment = []
         
         for j in range(self.n_circuits):
-        
-            #print("Circuit " + str(j+1) + "/" + str(self.n_circuits))
+            
+            print("Circuit " + str(j+1) + "/" + str(self.n_circuits))
             
             vectors = self.data[j*M1:(j+1)*M1]
             
@@ -476,7 +476,6 @@ class QKMeans():
             
             
             self.ite = self.ite + 1
-            print("ite " + str(self.ite))
             
             if self.ite == self.max_iterations:
                 break
