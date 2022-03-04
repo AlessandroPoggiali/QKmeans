@@ -346,7 +346,7 @@ def shots_test():
             'dataset_name': [data],
             'random_init_centroids': [False],
             'K': [3],
-            'M1': [x for x in range(2,129)],
+            'M1': [x for x in range(23,129)],
             'shots': [8192],
             'sc_tresh':  [0],
             'max_iterations': [1]
