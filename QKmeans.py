@@ -476,7 +476,7 @@ class QKMeans():
             
             
             self.ite = self.ite + 1
-			print("ite " + str(self.ite))
+            print("ite " + str(self.ite))
             
             if self.ite == self.max_iterations:
                 break
