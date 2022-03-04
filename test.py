@@ -339,13 +339,14 @@ def plot_cluster(params, dataset, algorithm, seed):
     
 def shots_test():
     datasets = ['noisymoon','blobs','blobs2','aniso']
-    datasets = ['blobs', 'iris']
+    datasets = ['noisymoon']
     for data in datasets:
         params = {
+            'quantization': [3],
             'dataset_name': [data],
             'random_init_centroids': [False],
-            'K': [3],
-            'M1': [2,4,8,16,32,64,128,150],
+            'K': [2,3],
+            'M1': [x for x in range(2,129)],
             'shots': [8192],
             'sc_tresh':  [0],
             'max_iterations': [1]
@@ -361,6 +362,7 @@ def shots_test():
         for i, params in enumerate(params_list):
         
             conf = {
+                'quantization': params['quantization'],
                 "dataset_name": params['dataset_name'],
                 "random_init_centroids": params['random_init_centroids'],
                 "K": params['K'],
@@ -407,8 +409,8 @@ def shots_test():
 
 if __name__ == "__main__":
     
-    #shots_test()
-    #exit()
+    shots_test()
+    exit()
     
     if len(sys.argv) != 2:
         print("ERROR: type '" + str(sys.argv[0]) + " n_processes' to execute the test")

@@ -424,7 +424,7 @@ class QKMeans():
         print("a1: " + str((sum(a1.values())/(sum(r1.values()))*100)))
         return str((sum(r1.values())/self.shots)*100)  
         '''
-        r1 = round(self.computing_cluster(check_prob=True), 3)
+        r1 = round(self.computing_cluster_3(check_prob=True), 3)
         print("r1: " + str(r1))
         return r1
     

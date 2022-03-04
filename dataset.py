@@ -10,7 +10,7 @@ font = {'size'   : 22}
 
 plt.rc('font', **font)
 
-n_samlpes = 128
+n_samlpes = 8
 
 class Dataset:
     
