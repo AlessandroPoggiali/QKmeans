@@ -345,8 +345,8 @@ def shots_test():
             'quantization': [3],
             'dataset_name': [data],
             'random_init_centroids': [False],
-            'K': [3],
-            'M1': [x for x in range(23,129)],
+            'K': [2,3],
+            'M1': [x for x in range(2,129)],
             'shots': [8192],
             'sc_tresh':  [0],
             'max_iterations': [1]
@@ -372,7 +372,7 @@ def shots_test():
                 "max_iterations": params['max_iterations'] 
             }
             
-            
+            '''
             dataset = Dataset(data, '1-norm')
             QKMEANS = QKMeans(dataset, conf)      
             
@@ -398,8 +398,8 @@ def shots_test():
                 initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
             
             r1_infnorm = QKMEANS.run_shots(initial_centroids=initial_centroids)
-            '''
-            r1_infnorm = 0
+            
+            r1_1norm = 0
             r1_theo = 1/2**(math.ceil(math.log(dataset.N,2)))
             
             df1 = {'M1': conf['M1'], 'N': dataset.N, 'K': conf['K'], 'p(R=1)_theo': r1_theo ,'p(R=1)_1-norm': r1_1norm ,'p(R=1)_inf-norm': r1_infnorm }
