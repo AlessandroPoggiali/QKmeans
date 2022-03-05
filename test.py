@@ -345,8 +345,8 @@ def shots_test():
             'quantization': [3],
             'dataset_name': [data],
             'random_init_centroids': [False],
-            'K': [2,3],
-            'M1': [x for x in range(2,129)],
+            'K': [2],
+            'M1': [x for x in range(96,129)],
             'shots': [8192],
             'sc_tresh':  [0],
             'max_iterations': [1]
