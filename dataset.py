@@ -4,13 +4,12 @@ from sklearn import datasets
 from sklearn.preprocessing import StandardScaler, normalize, MinMaxScaler, minmax_scale
 import matplotlib.pyplot as plt
 from utility import qdrawer
-import math
 
 font = {'size'   : 22}
 
 plt.rc('font', **font)
 
-n_samlpes = 128
+n_samlpes = 150
 
 class Dataset:
     

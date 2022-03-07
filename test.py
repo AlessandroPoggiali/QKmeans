@@ -287,6 +287,7 @@ def plot_initial_centroids(params, dataset, algorithm):
     if algorithm != 'qkmeans':
         params['M1'] = [None]
         params['shots'] = [None]
+        params['quantization'] = [None]
     
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
@@ -314,6 +315,7 @@ def plot_cluster(params, dataset, algorithm, seed):
     if algorithm != 'qkmeans':
         params['M1'] = [None]
         params['shots'] = [None]
+        params['quantization'] = [None]
     
     keys, values = zip(*params.items())
     params_list = [dict(zip(keys, v)) for v in product(*values)]
@@ -345,8 +347,8 @@ def shots_test():
             'quantization': [3],
             'dataset_name': [data],
             'random_init_centroids': [False],
-            'K': [2],
-            'M1': [x for x in range(96,129)],
+            'K': [2,3],
+            'M1': [x for x in range(2,129)],
             'shots': [8192],
             'sc_tresh':  [0],
             'max_iterations': [1]
@@ -372,7 +374,7 @@ def shots_test():
                 "max_iterations": params['max_iterations'] 
             }
             
-            '''
+            
             dataset = Dataset(data, '1-norm')
             QKMEANS = QKMeans(dataset, conf)      
             
@@ -384,8 +386,8 @@ def shots_test():
             else:
                 initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
             
-            r1_1norm = QKMEANS.run_shots(initial_centroids=initial_centroids)
-            '''
+            r1_1norm, a0_1norm = QKMEANS.run_shots(initial_centroids=initial_centroids)
+            
             dataset = Dataset(data, 'inf-norm')
             QKMEANS = QKMeans(dataset, conf)      
             
@@ -397,12 +399,11 @@ def shots_test():
             else:
                 initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
             
-            r1_infnorm = QKMEANS.run_shots(initial_centroids=initial_centroids)
-            
-            r1_1norm = 0
+            r1_infnorm, a0_infnorm = QKMEANS.run_shots(initial_centroids=initial_centroids)
+
             r1_theo = 1/2**(math.ceil(math.log(dataset.N,2)))
             
-            df1 = {'M1': conf['M1'], 'N': dataset.N, 'K': conf['K'], 'p(R=1)_theo': r1_theo ,'p(R=1)_1-norm': r1_1norm ,'p(R=1)_inf-norm': r1_infnorm }
+            df1 = {'M1': conf['M1'], 'N': dataset.N, 'K': conf['K'], 'p(R=1)_theo': r1_theo ,'p(R=1)_1-norm': r1_1norm ,'p(R=1)_inf-norm': r1_infnorm,'p(A=0)_1-norm': a0_1norm ,'p(A=0)_inf-norm': a0_infnorm }
             probabilities = probabilities.append(df1, ignore_index = True)
             
         pd.DataFrame(probabilities).to_csv(filename)
@@ -410,8 +411,8 @@ def shots_test():
 
 if __name__ == "__main__":
     
-    shots_test()
-    exit()
+    #shots_test()
+    #exit()
     
     if len(sys.argv) != 2:
         print("ERROR: type '" + str(sys.argv[0]) + " n_processes' to execute the test")
@@ -427,15 +428,15 @@ if __name__ == "__main__":
         print("ERROR: specify a positive integer for the number of processes")
         exit()
         
-   
+    quantization = 1
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
-    
+    '''
     params = {
-        'quantization': [2],
+        'quantization': [quantization],
         'dataset_name': ['iris'],
         'random_init_centroids': [False],
         'K': [3],
@@ -465,20 +466,21 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    exit()
+    '''
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     
     params = {
+        'quantization': [quantization],
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
-        'shots': [None],
-        'sc_tresh':  [0],
+        'M1': [None],
+        'shots': [8192],
+        'sc_tresh':  [1e-4],
         'max_iterations': [10]
     }
     
@@ -502,20 +504,21 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    '''
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
+    
 
     params = {
-        'quantization': [2],
+        'quantization': [quantization],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [128],
+        'M1': [None],
         'shots': [8192],
-        'sc_tresh':  [0],
+        'sc_tresh':  [1e-4],
         'max_iterations': [10]
     }
      
@@ -539,26 +542,23 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    exit()
-    
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS2 DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-    '''
-
     params = {
+        'quantization': [quantization],
         'dataset_name': ['blobs2'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
-        'shots': [None],
-        'sc_tresh':  [0],
+        'M1': [None],
+        'shots': [8192],
+        'sc_tresh':  [1e-4],
         'max_iterations': [10]
     }
      
-    dataset = Dataset('blobs2', 'z-norm')
+    dataset = Dataset('blobs2', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -578,19 +578,19 @@ if __name__ == "__main__":
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
       
-    '''
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 NOISYMOON DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
     params = {
+        'quantization': [quantization],
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
         'K': [2],
-        'M1': [150],
-        'shots': [50000],
-        'sc_tresh':  [0],
+        'M1': [None],
+        'shots': [8192],
+        'sc_tresh':  [1e-4],
         'max_iterations': [10]
     }
      

@@ -217,6 +217,7 @@ class QKMeans():
          
         if check_prob:
             r1_list = []
+            a0_list = []
         
         N = self.N
         M = self.M
@@ -244,7 +245,7 @@ class QKMeans():
         
         for j in range(self.n_circuits):
             
-            print("Circuit " + str(j+1) + "/" + str(self.n_circuits))
+            #print("Circuit " + str(j+1) + "/" + str(self.n_circuits))
             
             vectors = self.data[j*M1:(j+1)*M1]
             
@@ -331,6 +332,10 @@ class QKMeans():
                 r1 = {k: counts[k] for k in counts.keys() if k.endswith('1')}
                 r1_perc = (sum(r1.values())/self.shots)*100
                 r1_list.append(r1_perc)
+                
+                a0 = {k: r1[k] for k in r1.keys() if k.endswith('01')}
+                a0_perc = (sum(a0.values())/(sum(r1.values()))*100)
+                a0_list.append(a0_perc)
             
             
             goodCounts = {k: counts[k] for k in counts.keys() if k.endswith('01')} 
@@ -372,7 +377,7 @@ class QKMeans():
         self.cluster_assignment = cluster_assignment
         
         if check_prob:
-            return sum(r1_list) / len(r1_list)
+            return round(sum(r1_list)/len(r1_list),3),round(sum(a0_list)/len(a0_list),3)
         
             
     
@@ -399,10 +404,14 @@ class QKMeans():
         if self.old_centroids is None:
             return False
 
+        '''
         for i in range(len(self.centroids)):
             difference = np.linalg.norm(self.centroids[i]-self.old_centroids[i])
             if difference > self.sc_tresh:
                 return False
+        '''
+        if np.linalg.norm(self.centroids-self.old_centroids, ord='fro') >= self.sc_tresh:
+            return False
         
         return True
     
@@ -424,9 +433,10 @@ class QKMeans():
         print("a1: " + str((sum(a1.values())/(sum(r1.values()))*100)))
         return str((sum(r1.values())/self.shots)*100)  
         '''
-        r1 = round(self.computing_cluster_3(check_prob=True), 3)
+        r1, a0 = self.computing_cluster_3(check_prob=True)
         print("r1: " + str(r1))
-        return r1
+        print("a0: " + str(a0))
+        return r1, a0
     
 
         
