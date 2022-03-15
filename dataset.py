@@ -4,6 +4,7 @@ from sklearn import datasets
 from sklearn.preprocessing import StandardScaler, normalize, MinMaxScaler, minmax_scale
 import matplotlib.pyplot as plt
 from utility import qdrawer
+from sklearn.decomposition import PCA
 
 font = {'size'   : 22}
 
@@ -86,7 +87,12 @@ class Dataset:
         plt.gca().set_aspect('equal', adjustable='box')
         
         if conf is not None:
-            plt.title(algorithm + ": K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(conf["M1"]), fontdict = {'fontsize' : 25})
+            if algorithm == 'qkmeans':
+                plt.title(algorithm + ": K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(conf["M1"]), fontdict = {'fontsize' : 25})
+            elif algorithm == 'deltakmeans': 
+                plt.title(algorithm + ": K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", delta = " + str(conf["delta"]), fontdict = {'fontsize' : 25})
+            else:
+                plt.title(algorithm + ": K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + str(self.N), fontdict = {'fontsize' : 25})
         
         if filename is not None:
             plt.savefig(filename)
@@ -115,6 +121,8 @@ class Dataset:
     def load_dataset(self, dataset_name, to_preprocess=True):
         if dataset_name == 'iris':
             df = self.load_iris(to_preprocess)
+        if dataset_name == 'diabetes':
+            df = self.load_diabetes(to_preprocess)
         elif dataset_name == 'buddy':
             df = self.load_buddymove(to_preprocess)
         elif dataset_name == 'seeds':
@@ -123,6 +131,8 @@ class Dataset:
             df = self.load_blobs(to_preprocess)
         elif dataset_name == 'blobs2':
             df = self.load_blobs_2(to_preprocess)
+        elif dataset_name == 'blobs3':
+            df = self.load_blobs_3(to_preprocess)
         elif dataset_name == 'noisymoon':
             df = self.load_noisymoon(to_preprocess)
         elif dataset_name == 'aniso':
@@ -135,27 +145,41 @@ class Dataset:
     REAL DATA
     '''
     def load_iris(self, to_preprocess=True):
-        df = pd.read_csv("data/iris.csv", skipinitialspace=True, sep=',')
+        df = datasets.load_iris(as_frame=True).frame
         # rename columns
         df.columns = ["f0","f1","f2","f3","class"]
         # drop class column
         df = df.drop('class', axis=1)
-        #df = df.drop('f0', axis=1)
-        #df = df.drop('f1', axis=1)
         
-        #df = df.sample(n=64)
+        #df = df.sample(n=8, random_state=123)
         #df.reset_index(drop=True, inplace=True)
         
         if to_preprocess:
             df = self.scale(df)
             df = self.normalize(df)
             df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
-
-        # Translate the vector coordinates in the rotation angle we have to apply to the QRAM register qbit
-        #df.loc[:,"f0":"f3"] = df.loc[:,"f0":"f3"].apply(np.arcsin)
         
         return df
     
+    def load_diabetes(self, to_preprocess=True):
+        df = datasets.load_diabetes(as_frame=True).frame
+        # rename columns
+        df.columns = ["f0","f1","f2","f3","f4","f5","f6","f7","f8","f9","class"]
+        # drop class column
+        df = df.drop('class', axis=1)
+        
+        df = self.scale(df)
+        pca = PCA(n_components=4)
+        x = df.loc[:, :].values
+        principalComponents = pca.fit_transform(x)
+        df = pd.DataFrame(data = principalComponents, columns = ['f0','f1','f2','f3'])
+
+        if to_preprocess:
+            df = self.scale(df)
+            df = self.normalize(df)
+            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+        
+        return df
     
     def load_buddymove(self, to_preprocess=True):
         df = pd.read_csv("data/buddymove_holidayiq.csv", skipinitialspace=True, sep=',')
@@ -200,8 +224,7 @@ class Dataset:
             df = self.scale(df)
             df = self.normalize(df)
             df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
-            #scaler = MinMaxScaler(feature_range=(math.sqrt(2)/2, 1))
-            #df.loc[:,:] = scaler.fit_transform(df.loc[:,:])
+            
         return df
     
     def load_blobs(self, to_preprocess=True):
@@ -217,12 +240,6 @@ class Dataset:
             df = self.scale(df)
             df = self.normalize(df)
             df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
-            # max normalization
-            #df = df.apply(lambda row : row/max(abs(row)), axis=1)  
-            
-            # z-normalization
-            #df = df.apply(lambda row: (row-np.mean(row))/np.std(row))
-            #df = df.apply(lambda row: minmax_scale(row, feature_range=(-1,1)))
             
         return df
         
@@ -241,8 +258,7 @@ class Dataset:
             df = self.scale(df)
             df = self.normalize(df)
             df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
-            #scaler = MinMaxScaler(feature_range=(math.sqrt(2)/2, 1))
-            #df.loc[:,:] = scaler.fit_transform(df.loc[:,:])
+            
         return df
         
     def load_blobs_2(self, to_preprocess=True):
@@ -258,7 +274,21 @@ class Dataset:
             df = self.scale(df)
             df = self.normalize(df)
             df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
-            #scaler = MinMaxScaler(feature_range=(math.sqrt(2)/2, 1))
-            #df.loc[:,:] = scaler.fit_transform(df.loc[:,:])
+            
         return df
         
+    def load_blobs_3(self, to_preprocess=True):
+        x, y = datasets.make_blobs(n_samples=16, random_state=9, centers=2)
+        df = pd.DataFrame(x, y, columns=["f0", "f1"])  
+        
+        df['ground_truth'] = df.index
+        df.reset_index(drop=True, inplace=True)
+        self.ground_truth = df['ground_truth']
+        df = df.drop('ground_truth', axis=1)
+        
+        if to_preprocess:
+            df = self.scale(df)
+            df = self.normalize(df)
+            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+
+        return df

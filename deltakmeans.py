@@ -222,7 +222,7 @@ class DeltaKmeans():
             
     def print_params(self, process=0, i=0):
         print("Process " + str(process) + " - configuration: " + str(i) + 
-              "\nParameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + "\n")
+              "\nParameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", delta = " + str(self.delta) + "\n")
 
 
 '''

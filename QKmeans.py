@@ -6,6 +6,9 @@ import datetime
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
+from qiskit.providers.ibmq import least_busy
+from qiskit.tools.monitor import job_monitor
+from qiskit import IBMQ
 #from qiskit.circuit.library import MCMT, RYGate
 #from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
 from QRAM import buildCentroidState, buildVectorsState, encodeVector
@@ -14,7 +17,6 @@ from utility import measures
 font = {'size'   : 22}
 
 plt.rc('font', **font)
-
 
 class QKMeans():
     
@@ -26,7 +28,10 @@ class QKMeans():
         self.sc_tresh = conf['sc_tresh']
         self.max_iterations = conf['max_iterations']
         if conf['shots'] is None:
-            self.shots = min((self.K + self.M1) * 1000, 500000)
+            if self.M1 is None:
+                self.shots = 8192
+            else:
+                self.shots = min(self.K * self.M1 * 1024, 500000)
         else:
             self.shots = conf['shots']
         self.quantization = conf['quantization']
@@ -53,7 +58,7 @@ class QKMeans():
     Computes the quantum distances between all vectors and all centroids "sequentially": for each vector it computes the 
     quantum euclidian distance with a single centroid for all centroids
     '''
-    def computing_cluster_1(self):
+    def computing_cluster_1(self, provider=None):
     
         distances = []                         # list of distances: the i-th item is a list of distances between i-th vector and all centroids 
         
@@ -104,10 +109,18 @@ class QKMeans():
     
                 shots = self.shots
                 
-                simulator = Aer.get_backend('qasm_simulator')
-                job = execute(circuit, simulator, shots=shots)
-                result = job.result()
-                counts = result.get_counts(circuit)
+                if provider is not None:
+                    large_enough_devices = provider.backends(filters=lambda x: x.configuration().n_qubits > 4 and not x.configuration().simulator)
+                    backend = least_busy(large_enough_devices)
+                    job = execute(circuit, backend, shots=shots)
+                    job_monitor(job)
+                    result = job.result()
+                    counts = result.get_counts(circuit)
+                else:
+                    simulator = Aer.get_backend('qasm_simulator')
+                    job = execute(circuit, simulator, shots=shots)
+                    result = job.result()
+                    counts = result.get_counts(circuit)
                 #print("\nTotal counts are:",counts)
                 #plot_histogram(counts)
                 goodCounts = {k: counts[k] for k in counts.keys() & {'01','11'}}
@@ -124,9 +137,9 @@ class QKMeans():
             distances.append(centroid_distances)
         
         self.cluster_assignment = [(i.index(min(i))) for i in distances] # for each vector takes the closest centroid to perform the assignemnt
-    
-    
-    def computing_cluster_2(self):
+
+
+    def computing_cluster_2(self, provider=None):
         
         N = self.N
         K = self.K
@@ -191,21 +204,29 @@ class QKMeans():
                 circuit.measure(c[b], outcome[b+2])
             
             shots = self.shots
-            simulator = Aer.get_backend('qasm_simulator')
-            job = execute(circuit, simulator, shots=shots)
-            result = job.result()
-            counts = result.get_counts(circuit)
-            #print("\nTotal counts are:",counts)
+            if provider is not None:
+                large_enough_devices = provider.backends(filters=lambda x: x.configuration().n_qubits > 4 and not x.configuration().simulator)
+                backend = least_busy(large_enough_devices)
+                job = execute(circuit, backend, shots=shots)
+                job_monitor(job)
+                result = job.result()
+                counts = result.get_counts(circuit)
+            else:
+                simulator = Aer.get_backend('qasm_simulator')
+                job = execute(circuit, simulator, shots=shots)
+                result = job.result()
+                counts = result.get_counts(circuit)
+            print("\nTotal counts are:",counts)
             #plot_histogram(counts)
             goodCounts = {k: counts[k] for k in counts.keys() if k.endswith('01')} # register 1 and ancilla 0
             cluster = max(goodCounts, key=goodCounts.get)
-            #print(goodCounts)
+            print(goodCounts)
             cluster = int(cluster[:C_qbits], 2)
             
             if cluster >= K:
                 cluster = 0 
             cluster_assignment.append(cluster)
-            #print("assigned to cluster: " + str(cluster))
+            print("assigned to cluster: " + str(cluster))
              
 
         self.cluster_assignment = cluster_assignment 
@@ -441,12 +462,17 @@ class QKMeans():
 
         
     
-    def run(self, initial_centroids=None, seed=123):
+    def run(self, initial_centroids=None, seed=123, real_hw=False):
         
         if initial_centroids is None:
             self.centroids = self.data.sample(n=self.K, random_state=seed).values
         else:
             self.centroids = initial_centroids
+            
+        if real_hw:
+            provider = IBMQ.load_account()
+        else:
+            provider = None
             
         #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, initial_space=True)
         #self.dataset.plot2Features(self.data, 'f0', 'f1', self.centroids, cluster_assignment=None, initial_space=True, dataset_name='blobs')
@@ -455,12 +481,12 @@ class QKMeans():
             
             self.old_centroids = self.centroids.copy()
             
-            #print("iteration: " + str(self.ite))
+            print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
             if self.quantization == 1:
-                self.computing_cluster_1()
+                self.computing_cluster_1(provider)
             elif self.quantization == 2:
-                self.computing_cluster_2()
+                self.computing_cluster_2(provider)
             else:
                 self.computing_cluster_3()
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
