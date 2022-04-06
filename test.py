@@ -1,4 +1,4 @@
-ofrom QKmeans import QKMeans
+from QKmeans import QKMeans
 from deltakmeans import DeltaKmeans
 from itertools import product
 import numpy as np
@@ -66,7 +66,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     filename = "result/" + str(params["dataset_name"][0]) + "_" + str(algorithm) + ".csv"
     f = open(filename, 'w')
     if algorithm == "qkmeans":
-        f.write("index,date,q_v,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,treshold,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
+        f.write("index,date,q_v,K,M,N,M1,shots,n_circuits,max_qbits,n_ite,avg_ite_time,avg_ite_hw_time,treshold,avg_similarity,SSE,silhouette,v_measure,nm_info\n")
         for i in range(len(processes)):
             f1_name  = "result/" + str(dataset.dataset_name) + "_qkmeans_" + str(i) + ".csv"
             f1 = open(f1_name, "r")
@@ -142,6 +142,7 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         f.write(str(QKMEANS.max_qbits) + ",")
         f.write(str(QKMEANS.ite) + ",")
         f.write(str(QKMEANS.avg_ite_time()) + ",")
+        f.write(str(QKMEANS.avg_ite_hw_time()) + ",")
         f.write(str(conf['sc_tresh']) + ",")
         f.write(str(QKMEANS.avg_sim()) + ",")
         f.write(str(QKMEANS.SSE()) + ",")
@@ -414,7 +415,7 @@ def shots_test():
 def test_real_hardware():
     params = {
         'delta': [None],
-        'quantization': [1],
+        'quantization': [2],
         'dataset_name': ['blobs3'],
         'random_init_centroids': [False],
         'K': [2],
@@ -429,7 +430,7 @@ def test_real_hardware():
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
     print("-------------------- Quantum Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=1, seed=seed)
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=1, seed=seed)
     
     plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
@@ -437,7 +438,8 @@ def test_real_hardware():
 def test_delta(n_processes=1):
     
     params = {
-        'delta': [round(x,2) for x in np.arange(0,6,0.1)],
+        'delta': [4.5], 
+        #'delta': [round(x,2) for x in np.arange(0,6,0.1)],
         'quantization': [None],
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
@@ -452,6 +454,7 @@ def test_delta(n_processes=1):
     
     print("-------------------- Delta Kmeans --------------------")
     par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
@@ -484,6 +487,52 @@ def elbow_method(n_process):
     par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)  
     '''
 
+def only_plot():
+    datasets = ['aniso','blobs','blobs2','noisymoon']
+    configuration = 7
+    
+    for datasetname in datasets:
+        dataset = Dataset(datasetname, '1-norm')
+        if datasetname == 'aniso':
+            conf = {
+                    "delta": 0.9,
+                    "dataset_name": datasetname,
+                    "K": 3,
+                    "M1": 150
+                }
+        elif datasetname == 'blobs':
+            conf = {
+                    "delta": 3.5,
+                    "dataset_name": datasetname,
+                    "K": 3,
+                    "M1": 150
+                }
+        elif datasetname == 'blobs2':
+            conf = {
+                    "delta": 1,
+                    "dataset_name": datasetname,
+                    "K": 3,
+                    "M1": 150
+                }
+        elif datasetname == 'noisymoon':
+            conf = {
+                    "delta": 4.5,
+                    "dataset_name": datasetname,
+                    "K": 2,
+                    "M1": 150
+                }
+    
+        
+        for algorithm in ['qkmeans','deltakmeans','kmeans']:
+            configuration = (7 if algorithm=='qkmeans' else 0)
+            input_filename = "./FINALTEST/m1sintetici/result/assignment/" + str(datasetname) + "_" + str(algorithm) + "_" + str(configuration) + ".csv"
+            df_assignment = pd.read_csv(input_filename, sep=',')
+            cluster_assignment = df_assignment['cluster']
+            
+            output_filename = "plot/cluster/" + str(datasetname) + "_" + str(algorithm) + "_" + str(configuration) + ".png"
+            dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
+                                  initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
+
 if __name__ == "__main__":
     
     #shots_test()
@@ -492,6 +541,8 @@ if __name__ == "__main__":
     #test_real_hardware()
     #exit()
     
+    #only_plot()
+    #exit()
     
     if len(sys.argv) != 2:
         print("ERROR: type '" + str(sys.argv[0]) + " n_processes' to execute the test")
@@ -512,8 +563,8 @@ if __name__ == "__main__":
     #elbow_method(processes)
     #exit()
         
-    #test_delta(processes)
-    #exit()
+    test_delta(processes)
+    exit()
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST

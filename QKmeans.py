@@ -9,8 +9,6 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, 
 from qiskit.providers.ibmq import least_busy
 from qiskit.tools.monitor import job_monitor
 from qiskit import IBMQ
-#from qiskit.circuit.library import MCMT, RYGate
-#from qiskit.visualization import plot_histogram, plot_bloch_multivector, plot_state_city
 from QRAM import buildCentroidState, buildVectorsState, encodeVector
 from utility import measures
 
@@ -20,6 +18,12 @@ plt.rc('font', **font)
 
 class QKMeans():
     
+    """
+    QKMeans constructor: 
+    
+    :param dataset: dataset object
+    :param conf: parameters configuration of the algorithm
+    """
     def __init__(self, dataset, conf):
         
         self.K = conf['K']
@@ -53,11 +57,16 @@ class QKMeans():
         self.similarity_list = []
         self.nm_info_list = []
         self.times = []
+        self.execution_time_hw = []
         
-    '''
-    Computes the quantum distances between all vectors and all centroids "sequentially": for each vector it computes the 
-    quantum euclidian distance with a single centroid for all centroids
-    '''
+
+    """
+    computing_cluster_1: 
+    
+    Computes the quantum distances between all records and all centroids "sequentially"
+        
+    :provider (optional, default value=None): real quantum hardware
+    """
     def computing_cluster_1(self, provider=None):
     
         distances = []                         # list of distances: the i-th item is a list of distances between i-th vector and all centroids 
@@ -78,6 +87,8 @@ class QKMeans():
             q = QuantumRegister(Aqram_qbits, 'q')  # qram ancilla
     
         outcome = ClassicalRegister(2, 'bit')  # for measuring
+        
+        tot_execution_time = 0
     
         for index_v, vector in self.dataset.df.iterrows():
             centroid_distances = []            # list of distances between the current vector and all centroids
@@ -115,6 +126,9 @@ class QKMeans():
                     job = execute(circuit, backend, shots=shots)
                     job_monitor(job)
                     result = job.result()
+                    execution_time = result.time_taken
+                    tot_execution_time += execution_time
+                    print("executed in: " + str(execution_time))
                     counts = result.get_counts(circuit)
                 else:
                     simulator = Aer.get_backend('qasm_simulator')
@@ -137,8 +151,17 @@ class QKMeans():
             distances.append(centroid_distances)
         
         self.cluster_assignment = [(i.index(min(i))) for i in distances] # for each vector takes the closest centroid to perform the assignemnt
+        
+        return tot_execution_time
 
 
+    """
+    computing_cluster_2: 
+    
+    Computes the quantum assignment of a record to the set of centroids for every record
+        
+    :provider (optional, default value=None): real quantum hardware
+    """
     def computing_cluster_2(self, provider=None):
         
         N = self.N
@@ -166,6 +189,8 @@ class QKMeans():
         outcome = ClassicalRegister(classical_bit, 'bit')  # for measuring
         
         cluster_assignment = []
+        
+        tot_execution_time = 0
         
         for index_v, vector in self.dataset.df.iterrows():
             
@@ -210,13 +235,16 @@ class QKMeans():
                 job = execute(circuit, backend, shots=shots)
                 job_monitor(job)
                 result = job.result()
+                execution_time = result.time_taken
+                tot_execution_time += execution_time
+                print("executed in: " + str(execution_time))
                 counts = result.get_counts(circuit)
             else:
                 simulator = Aer.get_backend('qasm_simulator')
                 job = execute(circuit, simulator, shots=shots)
                 result = job.result()
                 counts = result.get_counts(circuit)
-            print("\nTotal counts are:",counts)
+            #print("\nTotal counts are:",counts)
             #plot_histogram(counts)
             goodCounts = {k: counts[k] for k in counts.keys() if k.endswith('01')} # register 1 and ancilla 0
             cluster = max(goodCounts, key=goodCounts.get)
@@ -230,10 +258,16 @@ class QKMeans():
              
 
         self.cluster_assignment = cluster_assignment 
+        
+        return tot_execution_time
     
-    '''
-    Compute all distances between vectors and centroids and assign cluster to every vector in many circuits
-    '''
+    """
+    computing_cluster_3: 
+    
+    Compute the cluster assignment of every record to centroids
+        
+    :check_prob (optional, default value=None): if True the method returns the post selection probability
+    """
     def computing_cluster_3(self, check_prob=False):
          
         if check_prob:
@@ -402,9 +436,11 @@ class QKMeans():
         
             
     
-    '''
+    """
+    computing_centroids: 
+        
     Computes the new cluster centers as the mean of the records within the same cluster
-    '''
+    """
     def computing_centroids(self):
         #data = data.reset_index(drop=True)
         
@@ -421,39 +457,37 @@ class QKMeans():
         self.centroids = self.dataset.normalize(df_centroids).values
 
 
+    """
+    stop_condition: 
+        
+    Checks if the algorithm have reached the stopping codition
+    
+    :return: True if the algorithm must terminate, False otherwise
+    """
     def stop_condition(self):
         if self.old_centroids is None:
             return False
 
-        '''
-        for i in range(len(self.centroids)):
-            difference = np.linalg.norm(self.centroids[i]-self.old_centroids[i])
-            if difference > self.sc_tresh:
-                return False
-        '''
         if np.linalg.norm(self.centroids-self.old_centroids, ord='fro') >= self.sc_tresh:
             return False
         
         return True
     
+   
+    """
+    run_shots: 
+        
+    Execute the quantum algorithm to check the postselection probabilities
     
+    :initial_centroids: vectors chosen as inital centroids
+    
+    :return: [r1, a0]:
+        - r1: postselection probability on the qubit |r>
+        - a0: postselection probability on the qubit |a>
+    """
     def run_shots(self, initial_centroids):
         self.centroids = initial_centroids
         print("theoretical postselection probability " + str(1/2**(math.ceil(math.log(self.N,2)))))
-        '''
-        counts = self.computing_cluster(check_prob=True)
-        r1 = {k: counts[k] for k in counts.keys() if k.endswith('1')}
-        r0 = {k: counts[k] for k in counts.keys() if k.endswith('0')}
-        print("r1: " + str((sum(r1.values())/self.shots)*100))
-        print("r0: " + str((sum(r0.values())/self.shots)*100))
-        
-
-        a0 = {k: r1[k] for k in r1.keys() if k.endswith('01')}
-        a1 = {k: r1[k] for k in r1.keys() if k.endswith('11')}
-        print("a0: " + str((sum(a0.values())/(sum(r1.values()))*100)))
-        print("a1: " + str((sum(a1.values())/(sum(r1.values()))*100)))
-        return str((sum(r1.values())/self.shots)*100)  
-        '''
         r1, a0 = self.computing_cluster_3(check_prob=True)
         print("r1: " + str(r1))
         print("a0: " + str(a0))
@@ -461,7 +495,15 @@ class QKMeans():
     
 
         
+    """
+    run: 
+        
+    It executes the algorithm 
     
+    :initial_centroids (optional, default_value=None): vectors chosen as initial centroids
+    :seed (optional, default value=123): seed to select randomly the initial centroids
+    :real_hw (optional, default value=False): if True the algorithm will be executed on real quantum hardware
+    """
     def run(self, initial_centroids=None, seed=123, real_hw=False):
         
         if initial_centroids is None:
@@ -484,9 +526,11 @@ class QKMeans():
             print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
             if self.quantization == 1:
-                self.computing_cluster_1(provider)
+                hw_time = self.computing_cluster_1(provider)
+                self.execution_time_hw.append(hw_time)
             elif self.quantization == 2:
-                self.computing_cluster_2(provider)
+                hw_time = self.computing_cluster_2(provider)
+                self.execution_time_hw.append(hw_time)
             else:
                 self.computing_cluster_3()
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
@@ -517,39 +561,98 @@ class QKMeans():
                 break
         
         
+    """
+    avg_ite_time: 
         
+    Returns the average iteration time of the algorithm
+    """
     def avg_ite_time(self):
         return round(np.mean(self.times), 2)
     
+    """
+    avg_ite_hw_time: 
+        
+    Returns the average iteration time of the algorithm execution on real hardware
+    """
+    def avg_ite_hw_time(self):
+        if len(self.execution_time_hw) > 0:
+            return round(np.mean(self.execution_time_hw), 2)
+        else:
+            return None
+    
+    """
+    avg_sim: 
+        
+    Returns the average similarity of the cluster assignment produced by the algorithm
+    """
     def avg_sim(self):
         return round(np.mean(self.similarity_list), 2)
     
+    
+    """
+    SSE: 
+        
+    Returns the final Sum of Squared Error
+    """
     def SSE(self):
         return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
     
+    
+    """
+    silhouette: 
+        
+    Returns the final Silhouette score
+    """
     def silhouette(self):
         if len(set(self.cluster_assignment)) <= 1 :
             return None
         else:
             return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
     
+    """
+    vmeasure: 
+        
+    Returns the final v_measure
+    """
     def vmeasure(self):
         if self.dataset.ground_truth is not None:
             return round(metrics.v_measure_score(self.dataset.ground_truth, self.cluster_assignment), 3)
         else:
             return None
     
+    """
+    nm_info: 
+        
+    Returns the final Normalized Mutual Info Score
+    """
     def nm_info(self):
         if self.dataset.ground_truth is not None:
             return round(metrics.normalized_mutual_info_score(self.dataset.ground_truth, self.cluster_assignment), 3)
         else:
             return None
     
+    """
+    save_measure: 
+        
+    Write into file the measures per iteration
+    
+    :index: number associated to the algorithm execution
+    """
     def save_measures(self, index):
         filename = "result/measures/" + str(self.dataset_name) + "_qkmeans_" + str(index) + ".csv"
         measure_df = pd.DataFrame({'similarity': self.similarity_list, 'SSE': self.SSE_list, 'silhouette': self.silhouette_list, 'nm_info': self.nm_info_list})
         pd.DataFrame(measure_df).to_csv(filename)
+      
         
+    """
+    print_result: 
+        
+    Write into file the results of the algorithm
+    
+    :filename (optional, default value=None): name of the file where to save the results
+    :process: process number which executed the algorithm 
+    :index_conf: configuration number associated to the algorithm execution
+    """
     def print_result(self, filename=None, process=0, index_conf=0):
         self.dataset.plotOnCircle(self.data, self.centroids, self.cluster_assignment)
         
@@ -605,26 +708,13 @@ class QKMeans():
             #f.write('# Final centroids \n'
             #self.centroids.to_csv(f, index=False)
             f.close()
-            
+       
+    """
+    print_params: 
+        
+    Prints the parameters configuration
+    """
     def print_params(self, process=0, i=0):
         print("Process " + str(process) + " - configuration: " + str(i) + 
               "\nParameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
 
-
-'''
-if __name__ == "__main__":
-
-    dataset = Dataset('noisymoon')
-    conf = {
-            "dataset_name": 'noisymoon',
-            "K": 3,
-            "M1": 10,
-            "sc_tresh": 0,
-            "max_iterations": 5
-        }
-    
-    QKMEANS = QKMeans(dataset, conf, 321)
-    QKMEANS.print_params()
-    QKMEANS.run()
-    QKMEANS.print_result("log/log.txt")
-'''

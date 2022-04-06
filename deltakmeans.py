@@ -13,6 +13,13 @@ plt.rc('font', **font)
 
 class DeltaKmeans():
     
+    """
+    DeltaKmeans constructor: 
+    
+    :param dataset: dataset object
+    :param conf: parameters configuration of the algorithm
+    :param delta: noise introduced in the algorithm
+    """
     def __init__(self, dataset, conf, delta):
         
         self.K = conf['K']
@@ -38,7 +45,12 @@ class DeltaKmeans():
         self.nm_info_list = []
         self.times = []   
     
-    def label_with_delta_squared(self): #given X (points) and centers: 2 numpy arrays
+    """
+    computing_cluster: 
+        
+    Computes the noisy cluster assignment for every record 
+    """
+    def computing_cluster(self): #given X (points) and centers: 2 numpy arrays
         X = self.data.values
         centers = self.centroids
         labels = []
@@ -54,12 +66,14 @@ class DeltaKmeans():
             if deltamin != normalmin:
                 count+=1
         #print("DELTA K-MEANS: %d random choices of centers over %d"%(count,len(X)))
-        return labels,count
+        return labels
 
     
-    '''
+    """
+    computing_centroids: 
+        
     Computes the new cluster centers as the mean of the records within the same cluster
-    '''
+    """
     def computing_centroids(self):
         #data = data.reset_index(drop=True)
         
@@ -76,20 +90,31 @@ class DeltaKmeans():
         self.centroids = self.dataset.normalize(df_centroids).values
     
     
+    """
+    stop_condition: 
+        
+    Checks if the algorithm have reached the stopping codition
+    
+    :return: True if the algorithm must terminate, False otherwise
+    """
     def stop_condition(self):
-        # ritorna true se i centroidi non cambiano piu di un tot false altrimenti
-
         if self.old_centroids is None:
             return False
 
-        for i in range(len(self.centroids)):
-            difference = np.linalg.norm(self.centroids[i]-self.old_centroids[i])
-            if difference > self.sc_tresh:
-                return False
+        if np.linalg.norm(self.centroids-self.old_centroids, ord='fro') >= self.sc_tresh:
+            return False
         
         return True
     
     
+    """
+    run: 
+        
+    It executes the algorithm 
+    
+    :initial_centroids (optional, default_value=None): vectors chosen as initial centroids
+    :seed (optional, default value=123): seed to select randomly the initial centroids
+    """
     def run(self, initial_centroids=None, seed=123):
         
         if initial_centroids is None:
@@ -106,8 +131,7 @@ class DeltaKmeans():
             
             #print("iteration: " + str(self.ite))
             #print("Computing the distance between all vectors and all centroids and assigning the cluster to the vectors")
-            self.cluster_assignment, count = self.label_with_delta_squared()
-            #print(count)
+            self.cluster_assignment = self.computing_cluster()
             #self.dataset.plot2Features(self.data, self.data.columns[0], self.data.columns[1], self.centroids, True)
     
             #print("Computing new centroids")
@@ -132,39 +156,86 @@ class DeltaKmeans():
             self.ite = self.ite + 1
             if self.ite == self.max_iterations:
                 break
+       
+    """
+    avg_ite_time: 
         
+    Returns the average iteration time of the algorithm
+    """
     def avg_ite_time(self):
         return round(np.mean(self.times), 2)
     
+    """
+    avg_sim: 
+        
+    Returns the average similarity of the cluster assignment produced by the algorithm
+    """
     def avg_sim(self):
         return round(np.mean(self.similarity_list), 2)
     
+    """
+    SSE: 
+        
+    Returns the final Sum of Squared Error
+    """
     def SSE(self):
         return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
     
+    """
+    silhouette: 
+        
+    Returns the final Silhouette score
+    """
     def silhouette(self):
         if len(set(self.cluster_assignment)) <= 1 :
             return None
         else:
             return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
     
+    """
+    vmeasure: 
+        
+    Returns the final v_measure
+    """
     def vmeasure(self):
         if self.dataset.ground_truth is not None:
             return round(metrics.v_measure_score(self.dataset.ground_truth, self.cluster_assignment), 3)
         else:
             return None
     
+    """
+    nm_info: 
+        
+    Returns the final Normalized Mutual Info Score
+    """
     def nm_info(self):
         if self.dataset.ground_truth is not None:
             return round(metrics.normalized_mutual_info_score(self.dataset.ground_truth, self.cluster_assignment), 3)
         else:
             return None
     
+    """
+    save_measure: 
+        
+    Write into file the measures per iteration
+    
+    :index: number associated to the algorithm execution
+    """
     def save_measures(self, index):
         filename = "result/measures/" + str(self.dataset_name) + "_deltakmeans_" + str(index) + ".csv"
         measure_df = pd.DataFrame({'similarity': self.similarity_list, 'SSE': self.SSE_list, 'silhouette': self.silhouette_list, 'nm_info': self.nm_info_list})
         pd.DataFrame(measure_df).to_csv(filename)
         
+        
+    """
+    print_result: 
+        
+    Write into file the results of the algorithm
+    
+    :filename (optional, default value=None): name of the file where to save the results
+    :process: process number which executed the algorithm 
+    :index_conf: configuration number associated to the algorithm execution
+    """
     def print_result(self, filename=None, process=0, index_conf=0):
         self.dataset.plotOnCircle(self.data, self.centroids, self.cluster_assignment)
         
@@ -219,26 +290,13 @@ class DeltaKmeans():
             #f.write('# Final centroids \n'
             #self.centroids.to_csv(f, index=False)
             f.close()
-            
+       
+        
+    """
+    print_params: 
+        
+    Prints the parameters configuration
+    """
     def print_params(self, process=0, i=0):
         print("Process " + str(process) + " - configuration: " + str(i) + 
               "\nParameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", delta = " + str(self.delta) + "\n")
-
-
-'''
-if __name__ == "__main__":
-
-    dataset = Dataset('noisymoon')
-    conf = {
-            "dataset_name": 'noisymoon',
-            "K": 2,
-            "M1": 10,
-            "sc_tresh": 0,
-            "max_iterations": 5
-        }
-    
-    deltakmeans = DeltaKmeans(dataset, conf, 0.2, 10)
-    deltakmeans.print_params()
-    deltakmeans.run()
-    deltakmeans.print_result("log/log.txt")
-'''

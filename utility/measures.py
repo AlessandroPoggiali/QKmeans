@@ -1,15 +1,35 @@
 import numpy as np
 
+"""
+SSE: 
+    
+It computes the Sum of Squared Error between records and centroids, given a certain assignment.
+
+:data: dataframe of records
+:centroids: numpy array of centroids
+:assignment: list of cluster assignment for every record
+
+:return: sse
+"""
 def SSE(data, centroids, assignment):
     sse = 0
     data = data.reset_index(drop=True)
     for index_v, v in data.iterrows():
-        #c = data.iloc[index_v]['cluster']
         c = assignment[index_v]
         sse = sse + np.linalg.norm(np.array(data.iloc[index_v])-centroids[int(c)])**2
     return sse
 
-# method used to check classification accuracy between quantum and classical distances
+"""
+check_similarity: 
+    
+It checks similarity between quantum and classical assignment to cluster
+
+:df: dataframe of records
+:centroids: numpy array of centroids
+:assignment: list of cluster assignment for every record
+
+:return: similarity
+"""
 def check_similarity(df, centroids, assignemnt):
     error = 0
     for index_v, item_v in df.iterrows():
@@ -22,6 +42,6 @@ def check_similarity(df, centroids, assignemnt):
     
     M = len(df)
     correct = M-error
-    accuracy = (correct/M)*100
+    similarity = (correct/M)*100
     
-    return accuracy
+    return similarity
