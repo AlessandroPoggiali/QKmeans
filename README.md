@@ -1,2 +1,2 @@
 # QKmeans
-Qantum version of the k-means algorithm
+Qantum version of the k-means clusterig algorithm
