@@ -650,6 +650,7 @@ if __name__ == "__main__":
     
     
     params = {
+        'delta': [0],
         'quantization': [quantization],
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
