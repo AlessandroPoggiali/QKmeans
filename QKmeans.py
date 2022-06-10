@@ -240,7 +240,7 @@ class QKMeans():
                 print("executed in: " + str(execution_time))
                 counts = result.get_counts(circuit)
             else:
-                simulator = Aer.get_backend('quasm_simulator')
+                simulator = Aer.get_backend('qasm_simulator')
                 #simulator.set_options(device='GPU')
                 job = execute(circuit, simulator, backend_options={"method","statevector_gpu"} ,shots=shots)
                 result = job.result()
