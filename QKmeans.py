@@ -241,6 +241,7 @@ class QKMeans():
                 counts = result.get_counts(circuit)
             else:
                 simulator = Aer.get_backend('qasm_simulator')
+                simulator.set_options(device='GPU')
                 job = execute(circuit, simulator, shots=shots)
                 result = job.result()
                 counts = result.get_counts(circuit)
@@ -248,13 +249,11 @@ class QKMeans():
             #plot_histogram(counts)
             goodCounts = {k: counts[k] for k in counts.keys() if k.endswith('01')} # register 1 and ancilla 0
             cluster = max(goodCounts, key=goodCounts.get)
-            print(goodCounts)
             cluster = int(cluster[:C_qbits], 2)
             
             if cluster >= K:
                 cluster = 0 
             cluster_assignment.append(cluster)
-            print("assigned to cluster: " + str(cluster))
              
 
         self.cluster_assignment = cluster_assignment 
