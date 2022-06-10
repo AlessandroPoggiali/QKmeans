@@ -241,8 +241,8 @@ class QKMeans():
                 counts = result.get_counts(circuit)
             else:
                 simulator = Aer.get_backend('statevector_simulator')
-                simulator.set_options(device='GPU', blocking_enable=True)
-                job = execute(circuit, simulator, shots=shots)
+                simulator.set_options(device='GPU')
+                job = execute(circuit, simulator, shots=1)
                 result = job.result()
                 counts = result.get_counts(circuit)
             #print("\nTotal counts are:",counts)
