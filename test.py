@@ -658,7 +658,7 @@ if __name__ == "__main__":
         'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
-        'max_iterations': [10]
+        'max_iterations': [2]
     }
     
     dataset = Dataset('aniso', '1-norm')
