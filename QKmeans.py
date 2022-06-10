@@ -247,6 +247,7 @@ class QKMeans():
                 counts = result.get_counts(circuit)
             #print("\nTotal counts are:",counts)
             #plot_histogram(counts)
+            '''
             goodCounts = {k: counts[k] for k in counts.keys() if k.endswith('01')} # register 1 and ancilla 0
             cluster = max(goodCounts, key=goodCounts.get)
             cluster = int(cluster[:C_qbits], 2)
@@ -259,6 +260,7 @@ class QKMeans():
         self.cluster_assignment = cluster_assignment 
         
         return tot_execution_time
+        '''
     
     """
     computing_cluster_3: 
