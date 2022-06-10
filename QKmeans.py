@@ -242,6 +242,7 @@ class QKMeans():
             else:
                 simulator = Aer.get_backend('statevector_simulator')
                 simulator.set_options(device='GPU')
+                print(simulator.available_devices())
                 job = execute(circuit, simulator, shots=shots)
                 result = job.result()
                 counts = result.get_counts(circuit)
