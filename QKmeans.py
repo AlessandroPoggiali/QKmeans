@@ -6,6 +6,7 @@ import datetime
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
+from qiskit.providers.aer import StatevectorSimulator
 from qiskit.providers.ibmq import least_busy
 from qiskit.tools.monitor import job_monitor
 from qiskit import IBMQ
@@ -240,8 +241,9 @@ class QKMeans():
                 print("executed in: " + str(execution_time))
                 counts = result.get_counts(circuit)
             else:
-                simulator = Aer.get_backend('statevector_simulator')
-                simulator.set_options(device='CPU')
+                #simulator = Aer.get_backend('statevector_simulator')
+                simulator = StatevectorSimulator(device='GPU')
+                #simulator.set_options(device='CPU')
                 job = execute(circuit, simulator, shots=shots)
                 result = job.result()
                 counts = result.get_counts(circuit)
