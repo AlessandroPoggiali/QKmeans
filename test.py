@@ -345,7 +345,7 @@ def plot_cluster(params, dataset, algorithm, seed):
     
 def shots_test():
     datasets = ['noisymoon','blobs','blobs2','aniso']
-    datasets = ['noisymoon']
+    datasets = ['blobs']
     for data in datasets:
         params = {
             'quantization': [3],
@@ -558,7 +558,7 @@ if __name__ == "__main__":
         print("ERROR: specify a positive integer for the number of processes")
         exit()
         
-    quantization = 2
+    quantization = 5
     
     #elbow_method(processes)
     #exit()
@@ -655,7 +655,7 @@ if __name__ == "__main__":
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [None],
+        'M1': [5],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [2]

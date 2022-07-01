@@ -23,7 +23,7 @@ def encodeVector(circuit, data, i, controls, rotationQubits, ancillaQubits):
 def encodeCentroids(circuit, data, i, controls, rotationQubit, ancillaQubits, c, cluster):
     # encode the cluster value putting the appropiate X gates on c qubits
     indexing(circuit, c, cluster)
-    
+
     # encode centroid vector
     encodeVector(circuit, data, i, controls, rotationQubit, ancillaQubits)
     
