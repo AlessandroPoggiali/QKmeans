@@ -27,20 +27,25 @@ class QKMeans():
     :param conf: parameters configuration of the algorithm
     """
     def __init__(self, dataset, conf):
-        
+        self.quantization = conf['quantization']
         self.K = conf['K']
-        self.M1 = conf['M1']
-        self.dataset_name = conf['dataset_name']
-        self.sc_tresh = conf['sc_tresh']
-        self.max_iterations = conf['max_iterations']
+        if self.quantization == 3 or self.quantization == 5:
+            self.M1 = conf['M1']
+        else:
+            self.M1 = None
+        
         if conf['shots'] is None:
             if self.M1 is None:
-                self.shots = 8192
+                #self.shots = 8192
+                self.shots = min(self.K * 1024, 500000)
             else:
                 self.shots = min(self.K * self.M1 * 1024, 500000)
         else:
             self.shots = conf['shots']
-        self.quantization = conf['quantization']
+    
+        self.dataset_name = conf['dataset_name']
+        self.sc_tresh = conf['sc_tresh']
+        self.max_iterations = conf['max_iterations']
         self.dataset = dataset
         self.data = self.dataset.df
         self.N = self.dataset.N
@@ -646,8 +651,6 @@ class QKMeans():
             ic_c = IntegerComparator(C_qbits, K, True, 'comp_1')
             ic_m = IntegerComparator(QRAMINDEX_qbits, M1, True, 'comp_2')
 
-
-
             if Aqram_qbits > 0:
                 q = QuantumRegister(Aqram_qbits, 'q')  # qram ancilla
                 if Anc_qbits_c > 0:
@@ -1011,7 +1014,7 @@ class QKMeans():
             f.write("###### TEST " + str(process)+"_"+str(index_conf) + " on " + str(self.dataset_name) + " dataset\n")
             f.write("# Executed on " + str(dt) + "\n")
             f.write("## QKMEANS\n")
-            f.write("# Parameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
+            f.write("# Parameters: VERSION = " + str(self.quantization) + "K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
             f.write("# Iterations needed: " + str(self.ite) + "/" + str(self.max_iterations) + "\n")
             f.write('# Average iteration time: ' + str(avg_time) + 's \n')
             f.write('# Average similarity w.r.t classical assignment: ' + str(avg_sim) + '% \n')

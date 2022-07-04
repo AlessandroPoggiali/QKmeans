@@ -125,15 +125,15 @@ class Dataset:
             if algorithm == 'qkmeans':
                 plt.title("K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + 
                           str(self.N) + ", M1 = " + str(conf["M1"]), fontdict = {'fontsize' : 30})
-                plt.suptitle('q-kmeans')
+                plt.suptitle('q-k-means-q' + str(conf["quantization"]))
             elif algorithm == 'deltakmeans': 
                 plt.title("K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + 
                           str(self.N) + ", delta = " + str(conf["delta"]), fontdict = {'fontsize' : 30})
-                plt.suptitle('delta-kmeans')
+                plt.suptitle('delta-k-means')
             else:
                 plt.title("K = " + str(conf["K"]) + ", M = " + str(self.M) + ", N = " + 
                           str(self.N), fontdict = {'fontsize' : 30})
-                plt.suptitle('kmeans')
+                plt.suptitle('k-means')
         
         if filename is not None:
             plt.savefig(filename)
