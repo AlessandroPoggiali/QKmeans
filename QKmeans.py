@@ -519,8 +519,11 @@ class QKMeans():
             
             circuit.h(a)
             circuit.h(i)
-            circuit.h(c)    
-            circuit.append(ic, c[:]+f[:]+anc[:])
+            circuit.h(c) 
+            if Anc_qbits > 0:   
+                circuit.append(ic, c[:]+f[:]+anc[:])
+            else:
+                circuit.append(ic, c[:]+f[:])
 
             #--------------------- data vetcor encoding  -----------------------------#
     
@@ -680,8 +683,14 @@ class QKMeans():
             circuit.h(i)
             circuit.h(c)
             circuit.h(qramindex)
-            circuit.append(ic_c, c[:]+[f[0]]+anc_c[:])
-            circuit.append(ic_m, qramindex[:]+[f[1]]+anc_m[:])
+            if Anc_qbits_c > 0:
+                circuit.append(ic_c, c[:]+[f[0]]+anc_c[:])
+            else:
+                circuit.append(ic_c, c[:]+[f[0]])
+            if Anc_qbits_m > 0:
+                circuit.append(ic_m, qramindex[:]+[f[1]]+anc_m[:])
+            else: 
+                circuit.append(ic_m, qramindex[:]+[f[1]])
 
             #--------------------- data vetcor encoding  -----------------------------#
 
@@ -1036,5 +1045,5 @@ class QKMeans():
     """
     def print_params(self, process=0, i=0):
         print("Process " + str(process) + " - configuration: " + str(i) + 
-              "\nParameters: K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
+              "\nParameters: VERSION = " + str(self.quantization) + " K = " + str(self.K) + ", M = " + str(self.M) + ", N = " + str(self.N) + ", M1 = " + str(self.M1) + ", shots = " + str(self.shots) + "\n")
 

@@ -648,7 +648,8 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-        
+    '''
+    
     params = {
         'delta': [0],
         'quantization': [2,3,4,5],
@@ -661,7 +662,7 @@ if __name__ == "__main__":
         'max_iterations': [10]
     }
     
-    dataset = Dataset('aniso', '1-norm')
+    dataset = Dataset('aniso', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -681,11 +682,13 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
+    '''
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
+    '''
 
     params = {
         'delta' : [0],
@@ -696,10 +699,10 @@ if __name__ == "__main__":
         'M1': [150],
         'shots': [None],
         'sc_tresh':  [1e-4],
-        'max_iterations': [1]
+        'max_iterations': [10]
     }
      
-    dataset = Dataset('blobs', '1-norm')
+    dataset = Dataset('blobs', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -718,10 +721,13 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+
+    '''
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS2 DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    '''
 
     params = {
         'delta': [0],
@@ -735,7 +741,7 @@ if __name__ == "__main__":
         'max_iterations': [10]
     }
      
-    dataset = Dataset('blobs2', '1-norm')
+    dataset = Dataset('blobs2', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -755,6 +761,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
       
+    '''
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 NOISYMOON DATASET TEST
@@ -762,7 +769,7 @@ if __name__ == "__main__":
 
     params = {
         'delta': [0],
-        'quantization': [2,3,4,5],
+        'quantization': [5],
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
         'K': [2],
