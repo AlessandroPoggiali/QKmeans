@@ -23,6 +23,56 @@ plt.rc('font', **font)
 delta = 0
 seed = 123
         
+def seq_test(dataset, conf):
+    index = 0
+    filename  = "result/" + str(dataset.dataset_name) + "_qkmeans_0.csv" 
+    dt = datetime.datetime.now().replace(microsecond=0)
+        
+    # execute quantum kmenas
+    QKMEANS = QKMeans(dataset, conf)        
+    if conf['random_init_centroids']:
+        initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
+    else:
+        initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
+
+    filename_centroids = "result/initial_centroids/" + str(dataset.dataset_name) + "_qkmeans_" + str(index) + ".csv"
+    centroids_df = pd.DataFrame(initial_centroids, columns=dataset.df.columns)
+    pd.DataFrame(centroids_df).to_csv(filename_centroids)
+    
+    QKMEANS.print_params()
+    
+    QKMEANS.run(initial_centroids=initial_centroids)    
+    
+    
+    f = open(filename, 'a')
+    f.write(str(index) + ",")
+    f.write(str(dt) + ",")
+    f.write(str(conf['quantization']) + ",")
+    f.write(str(QKMEANS.K) + ",")
+    f.write(str(QKMEANS.M) + ",")
+    f.write(str(QKMEANS.N) + ",")
+    f.write(str(QKMEANS.M1) + ",")
+    f.write(str(QKMEANS.shots) + ",")
+    f.write(str(QKMEANS.n_circuits) + ",")
+    f.write(str(QKMEANS.max_qbits) + ",")
+    f.write(str(QKMEANS.ite) + ",")
+    f.write(str(QKMEANS.avg_ite_time()) + ",")
+    f.write(str(QKMEANS.avg_ite_hw_time()) + ",")
+    f.write(str(conf['sc_tresh']) + ",")
+    f.write(str(QKMEANS.avg_sim()) + ",")
+    f.write(str(QKMEANS.SSE()) + ",")
+    f.write(str(QKMEANS.silhouette()) + ",")
+    f.write(str(QKMEANS.vmeasure()) + ",")
+    f.write(str(QKMEANS.nm_info()) + "\n")
+    f.close()
+    
+    #QKMEANS.print_result(filename, n_chunk, i)
+    filename_assignment = "result/assignment/" + str(dataset.dataset_name) + "_qkmeans_" + str(index) + ".csv"
+    assignment_df = pd.DataFrame(QKMEANS.cluster_assignment, columns=['cluster'])
+    pd.DataFrame(assignment_df).to_csv(filename_assignment)
+    
+    QKMEANS.save_measures(index)
+
 def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
     
     if algorithm != 'qkmeans':
@@ -572,8 +622,10 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
     '''
+
     params = {
-        'quantization': [quantization],
+        'delta': [0], 
+        'quantization': [3],
         'dataset_name': ['iris'],
         'random_init_centroids': [False],
         'K': [3],
@@ -648,18 +700,18 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     
     params = {
         'delta': [0],
-        'quantization': [2,3,4,5],
+        'quantization': [2],
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
-        'K': [3],
+        'K': [2],
         'M1': [150],
         'shots': [None],
         'sc_tresh':  [1e-4],
-        'max_iterations': [10]
+        'max_iterations': [2]
     }
     
     dataset = Dataset('aniso', 'inf-norm')
@@ -682,7 +734,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    '''
+    exit()
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
@@ -778,14 +830,16 @@ if __name__ == "__main__":
         'sc_tresh':  [1e-4],
         'max_iterations': [10]
     }
-     
-    dataset = Dataset('noisymoon', '1-norm')
+    
+
+    dataset = Dataset('noisymoon', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
     print("-------------------- Quantum Kmeans --------------------")
     par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
-    
+
+
     #print("-------------------- Classical Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     

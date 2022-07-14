@@ -5,7 +5,7 @@ import time
 import datetime
 import matplotlib.pyplot as plt
 from sklearn import metrics
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer, transpile
 from qiskit.providers.aer import StatevectorSimulator
 from qiskit.providers.ibmq import least_busy
 from qiskit.tools.monitor import job_monitor
@@ -127,6 +127,21 @@ class QKMeans():
     
                 shots = self.shots
                 
+                '''
+                d = dict(circuit.count_ops())
+                gates = sum(dict({k: v for k, v in d.items() if k != 'barrier' and k != 'measure'}).values())
+                print("qubits: " + str(circuit.num_qubits))
+                print("depth: " + str(circuit.depth()))
+                print("gates: " + str(gates))
+                circuit_low = transpile(circuit, basis_gates=['id', 'rx', 'ry', 'rz', 'cx', 'cp'])
+                d = dict(circuit_low.count_ops())
+                gates = sum(dict({k: v for k, v in d.items() if k != 'barrier' and k != 'measure'}).values())
+                print("qubits: " + str(circuit_low.num_qubits))
+                print("depth: " + str(circuit_low.depth()))
+                print("gates: " + str(gates))
+                exit()
+                '''
+
                 if provider is not None:
                     large_enough_devices = provider.backends(filters=lambda x: x.configuration().n_qubits > 4 and not x.configuration().simulator)
                     backend = least_busy(large_enough_devices)
@@ -139,6 +154,7 @@ class QKMeans():
                     counts = result.get_counts(circuit)
                 else:
                     simulator = Aer.get_backend('qasm_simulator')
+                    simulator.set_options(device='GPU')
                     job = execute(circuit, simulator, shots=shots)
                     result = job.result()
                     counts = result.get_counts(circuit)
@@ -240,6 +256,22 @@ class QKMeans():
                 circuit.measure(c[b], outcome[b+2])
             
             shots = self.shots
+
+            '''
+            d = dict(circuit.count_ops())
+            gates = sum(dict({k: v for k, v in d.items() if k != 'barrier' and k != 'measure'}).values())
+            print("qubits: " + str(circuit.num_qubits))
+            print("depth: " + str(circuit.depth()))
+            print("gates: " + str(gates))
+            circuit_low = transpile(circuit, basis_gates=['id', 'rx', 'ry', 'rz', 'cx', 'cp'])
+            d = dict(circuit_low.count_ops())
+            gates = sum(dict({k: v for k, v in d.items() if k != 'barrier' and k != 'measure'}).values())
+            print("qubits: " + str(circuit_low.num_qubits))
+            print("depth: " + str(circuit_low.depth()))
+            print("gates: " + str(gates))
+            exit()
+            '''
+
             if provider is not None:
                 large_enough_devices = provider.backends(filters=lambda x: x.configuration().n_qubits > 4 and not x.configuration().simulator)
                 backend = least_busy(large_enough_devices)
@@ -251,9 +283,8 @@ class QKMeans():
                 print("executed in: " + str(execution_time))
                 counts = result.get_counts(circuit)
             else:
-                #simulator = Aer.get_backend('statevector_simulator')
-                simulator = StatevectorSimulator(device='CPU')
-                #simulator.set_options(device='CPU')
+                simulator = Aer.get_backend('qasm_simulator')
+                simulator.set_options(device='GPU')
                 job = execute(circuit, simulator, shots=shots)
                 result = job.result()
                 counts = result.get_counts(circuit)
@@ -405,7 +436,23 @@ class QKMeans():
             for b in range(QRAMINDEX_qbits):
                 circuit.measure(qramindex[b], outcome[b+2+C_qbits])
     
+            '''
+            d = dict(circuit.count_ops())
+            gates = sum(dict({k: v for k, v in d.items() if k != 'barrier' and k != 'measure'}).values())
+            print("qubits: " + str(circuit.num_qubits))
+            print("depth: " + str(circuit.depth()))
+            print("gates: " + str(gates))
+            circuit_low = transpile(circuit, basis_gates=['id', 'rx', 'ry', 'rz', 'cx', 'cp'])
+            d = dict(circuit_low.count_ops())
+            gates = sum(dict({k: v for k, v in d.items() if k != 'barrier' and k != 'measure'}).values())
+            print("qubits: " + str(circuit_low.num_qubits))
+            print("depth: " + str(circuit_low.depth()))
+            print("gates: " + str(gates))
+            exit()
+            '''
+
             simulator = Aer.get_backend('qasm_simulator')
+            simulator.set_options(device='GPU')
             job = execute(circuit, simulator, shots=self.shots)
             result = job.result()
             counts = result.get_counts(circuit)
@@ -479,7 +526,7 @@ class QKMeans():
             C_qbits = math.ceil(math.log(K,2))     # number of qbits needed for indexing all centroids
         Rqram_qbits = 1                        # number of qbits for qram register
         Flag_qbits = 1
-        Aqram_qbits = I_qbits + C_qbits + Aknn_qbits + Flag_qbits - 2 # number of qbits for qram ancillas
+        Aqram_qbits = I_qbits + C_qbits + Aknn_qbits - 2 # number of qbits for qram ancillas
 
         Anc_qbits = C_qbits - 1
         self.max_qbits = I_qbits + C_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits + Flag_qbits + Anc_qbits
@@ -636,7 +683,7 @@ class QKMeans():
             if Anc_qbits_m > 0:
                 anc_m = QuantumRegister(Anc_qbits_m, 'a_m') # ancilla qubits for integer comparison 2
 
-            Aqram_qbits = I_qbits + C_qbits + QRAMINDEX_qbits + Aknn_qbits + Flag_qbits - 2 # number of qbits for qram ancillas
+            Aqram_qbits = I_qbits + C_qbits + QRAMINDEX_qbits + Aknn_qbits - 2 # number of qbits for qram ancillas
             if C_qbits > QRAMINDEX_qbits:
                 Aqram_qbits = Aqram_qbits - QRAMINDEX_qbits
             else:
@@ -683,14 +730,16 @@ class QKMeans():
             circuit.h(i)
             circuit.h(c)
             circuit.h(qramindex)
-            if Anc_qbits_c > 0:
-                circuit.append(ic_c, c[:]+[f[0]]+anc_c[:])
-            else:
-                circuit.append(ic_c, c[:]+[f[0]])
-            if Anc_qbits_m > 0:
-                circuit.append(ic_m, qramindex[:]+[f[1]]+anc_m[:])
-            else: 
-                circuit.append(ic_m, qramindex[:]+[f[1]])
+            if K != 2**C_qbits:
+                if Anc_qbits_c > 0:
+                    circuit.append(ic_c, c[:]+[f[0]]+anc_c[:])
+                else:
+                    circuit.append(ic_c, c[:]+[f[0]])
+            if M1 != 2**QRAMINDEX_qbits:
+                if Anc_qbits_m > 0:
+                    circuit.append(ic_m, qramindex[:]+[f[1]]+anc_m[:])
+                else: 
+                    circuit.append(ic_m, qramindex[:]+[f[1]])
 
             #--------------------- data vetcor encoding  -----------------------------#
 
@@ -712,8 +761,6 @@ class QKMeans():
 
             circuit.h(a) 
 
-            #return circuit
-
             circuit.measure(a, outcome[1])
             circuit.measure(f[0], outcome[2])
             circuit.measure(f[1], outcome[3])
@@ -725,6 +772,8 @@ class QKMeans():
             # measuring qram bits
             for b in range(QRAMINDEX_qbits):
                 circuit.measure(qramindex[b], outcome[b+4+C_qbits])
+
+            
 
             simulator = Aer.get_backend('qasm_simulator')
             job = execute(circuit, simulator, shots=self.shots)
