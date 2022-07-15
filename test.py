@@ -712,21 +712,21 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     
     params = {
         'delta': [0],
-        'quantization': [2],
+        'quantization': [1,2,3],
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
         'K': [2],
-        'M1': [150],
+        'M1': [64],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [2]
     }
     
-    dataset = Dataset('aniso', 'inf-norm')
+    dataset = Dataset('aniso', '1-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -746,7 +746,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    '''
+    exit()
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
@@ -754,7 +754,7 @@ if __name__ == "__main__":
     
     params = {
         'delta' : [0],
-        'quantization': [1,2,3],
+        'quantization': [2,3],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
