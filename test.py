@@ -93,25 +93,37 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
         for j in range(len(index)):
             indexlist[i][j] = t
             t = t + 1
-    
-    if algorithm == "qkmeans":
-        processes = [mp.Process(target=QKmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
-    elif algorithm == "kmeans":
-        processes = [mp.Process(target=kmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
-    elif algorithm == "deltakmeans":
-        processes = [mp.Process(target=delta_kmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
-    else: 
-        print("ERROR: wrong algorithm parameter (use 'quantum', 'classical' or 'delta'")
+
+    if len(params_list) == 1:
+        if algorithm == "qkmeans":
+            QKmeans_test(dataset, list_chunks[0], 0, seed, indexlist)
+        elif algorithm == "kmeans":
+            kmeans_test(dataset, list_chunks[0], 0, seed, indexlist)
+        elif algorithm == "deltakmeans":
+            delta_kmeans_test(dataset, list_chunks[0], 0, seed, indexlist)
+        else: 
+            print("ERROR: wrong algorithm parameter (use 'quantum', 'classical' or 'delta'")
+            return
         return
+    else:       
+        if algorithm == "qkmeans":
+            processes = [mp.Process(target=QKmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
+        elif algorithm == "kmeans":
+            processes = [mp.Process(target=kmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
+        elif algorithm == "deltakmeans":
+            processes = [mp.Process(target=delta_kmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
+        else: 
+            print("ERROR: wrong algorithm parameter (use 'quantum', 'classical' or 'delta'")
+            return
 
-    for p in processes:
-        p.start()
+        for p in processes:
+            p.start()
 
-    for p in processes:
-        p.join()
-        print("process ", p, " terminated")
+        for p in processes:
+            p.join()
+            print("process ", p, " terminated")
 
-    print("Processes joined")
+        print("Processes joined")
 
     filename = "result/" + str(params["dataset_name"][0]) + "_" + str(algorithm) + ".csv"
     f = open(filename, 'w')
