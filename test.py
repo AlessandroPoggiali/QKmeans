@@ -754,7 +754,7 @@ if __name__ == "__main__":
     
     params = {
         'delta' : [0],
-        'quantization': [3],
+        'quantization': [1,2,3],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
@@ -764,7 +764,7 @@ if __name__ == "__main__":
         'max_iterations': [5]
     }
      
-    dataset = Dataset('blobs', '1-norm')
+    dataset = Dataset('blobs', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     

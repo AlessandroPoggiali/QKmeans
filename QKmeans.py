@@ -452,7 +452,7 @@ class QKMeans():
             '''
 
             simulator = Aer.get_backend('qasm_simulator')
-            simulator.set_options(device='GPU')
+            #simulator.set_options(device='GPU')
             job = execute(circuit, simulator, shots=self.shots)
             result = job.result()
             counts = result.get_counts(circuit)
