@@ -1,2 +1,0 @@
-index,date,K,M,N,delta,n_ite,avg_ite_time,treshold,avg_similarity,SSE,silhouette,v_measure,nm_info
-0,2022-07-13 17:21:23,3,150,4,0,10,0.01,0,99.47,295.639,0.557,None,None
