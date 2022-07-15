@@ -742,7 +742,7 @@ if __name__ == "__main__":
     
     params = {
         'delta' : [0],
-        'quantization': [1,2,3],
+        'quantization': [3],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
