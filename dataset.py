@@ -200,6 +200,7 @@ class Dataset:
             df = self.load_aniso(to_preprocess)
         else:
             print("ERROR: No dataset found")
+            exit()
         return df
            
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
