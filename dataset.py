@@ -182,12 +182,8 @@ class Dataset:
     def load_dataset(self, dataset_name, to_preprocess=True):
         if dataset_name == 'iris':
             df = self.load_iris(to_preprocess)
-        if dataset_name == 'diabetes':
+        elif dataset_name == 'diabetes':
             df = self.load_diabetes(to_preprocess)
-        elif dataset_name == 'buddy':
-            df = self.load_buddymove(to_preprocess)
-        elif dataset_name == 'seeds':
-            df = self.load_seeds(to_preprocess)
         elif dataset_name == 'blobs':
             df = self.load_blobs(to_preprocess)
         elif dataset_name == 'blobs2':
