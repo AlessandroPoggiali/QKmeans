@@ -153,8 +153,8 @@ def computing_cluster_2(dataset, centroids):
         
         shots = 3*1024
        
-        simulator = Aer.get_backend('statevector_simulator')
-        simulator.set_options(device='GPU', cuStateVec_threshold=5)
+        simulator = Aer.get_backend('statevector_simulator', device='GPU', cuStateVec_threshold=5)
+        #simulator.set_options(device='GPU', cuStateVec_threshold=5)
         job = execute(circuit, simulator, shots=shots)
         result = job.result()
         counts = result.get_counts(circuit)
