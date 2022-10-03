@@ -179,7 +179,12 @@ class DeltaKmeans():
     Returns the final Sum of Squared Error
     """
     def SSE(self):
-        return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
+        series = []
+        for i in range(self.K):
+            series.append(self.data.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
+
+        centroids = pd.concat(series, axis=1).T.values
+        return round(measures.SSE(self.data, centroids, self.cluster_assignment), 3)
     
     """
     silhouette: 

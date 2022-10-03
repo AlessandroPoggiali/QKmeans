@@ -53,10 +53,12 @@ class Dataset:
     :return: data
     """
     def normalize(self, data):
-        if self.preprocessing is None or self.preprocessing == '1-norm':
+        if self.preprocessing is None or self.preprocessing == '2-norm':
             data.loc[:,:] = normalize(data.loc[:,:])
         elif self.preprocessing == 'inf-norm':
+            data.loc[:,:] = normalize(data.loc[:,:])
             data = data.apply(lambda row : row/max(abs(row)), axis=1)
+            #print(data.max(axis=1))
         else: 
             print("ERROR: wrong norm in input")
             exit()

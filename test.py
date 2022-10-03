@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans, kmeans_plusplus
 from pyclustering.cluster.center_initializer import kmeans_plusplus_initializer
 from sklearn import metrics
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler, normalize
 from utility import measures
 from dataset import Dataset
 import time
@@ -95,6 +96,7 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
             t = t + 1
 
     if len(params_list) == 1:
+        processes = [None]
         if algorithm == "qkmeans":
             QKmeans_test(dataset, list_chunks[0], 0, seed, indexlist)
         elif algorithm == "kmeans":
@@ -104,7 +106,6 @@ def par_test(params, dataset, algorithm='qkmeans', n_processes=2, seed=123):
         else: 
             print("ERROR: wrong algorithm parameter (use 'quantum', 'classical' or 'delta'")
             return
-        return
     else:       
         if algorithm == "qkmeans":
             processes = [mp.Process(target=QKmeans_test, args=(dataset, chunk, i, seed, indexlist))  for i, chunk in enumerate(list_chunks)]
@@ -264,6 +265,7 @@ def kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         avg_time = round((elapsed / kmeans.n_iter_), 2)
         #print('Average iteration time: ' + str(avg_time) + 's \n')
         #print('SSE kmeans %s' % kmeans.inertia_)
+        #centroids = normalize(kmeans.cluster_centers_)
         sse = round(measures.SSE(data, kmeans.cluster_centers_, kmeans.labels_), 3)
         silhouette = round(metrics.silhouette_score(data, kmeans.labels_, metric='euclidean'), 3)
         if dataset.ground_truth is not None:
@@ -347,7 +349,7 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         deltakmeans.save_measures(index)
         
 
-def plot_initial_centroids(params, dataset, algorithm):
+def plot_initial_centroids(params, dataset, algorithm, version=None):
     if algorithm != 'qkmeans':
         params['M1'] = [None]
         params['shots'] = [None]
@@ -359,6 +361,7 @@ def plot_initial_centroids(params, dataset, algorithm):
     for i, params in enumerate(params_list):
         
         conf = {
+            "quantization": version,
             "delta": params['delta'],
             "dataset_name": params['dataset_name'],
             "K": params['K'],
@@ -426,7 +429,7 @@ def shots_test():
         
         filename = "result/probabilities/" + data + ".csv"
 
-        probabilities = pd.DataFrame(columns=['M1','N','K','p(R=1)_theo','p(R=1)_1-norm','p(R=1)_inf-norm'])
+        probabilities = pd.DataFrame(columns=['M1','N','K','p(R=1)_theo','p(R=1)_2-norm','p(R=1)_inf-norm'])
 
         for i, params in enumerate(params_list):
         
@@ -442,11 +445,11 @@ def shots_test():
             }
             
             
-            dataset = Dataset(data, '1-norm')
+            dataset = Dataset(data, '2-norm')
             QKMEANS = QKMeans(dataset, conf)      
             
             QKMEANS.print_params(0, i)
-            print("1-norm")
+            print("2-norm")
             
             if conf['random_init_centroids']:
                 initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
@@ -470,7 +473,7 @@ def shots_test():
 
             r1_theo = 1/2**(math.ceil(math.log(dataset.N,2)))
             
-            df1 = {'M1': conf['M1'], 'N': dataset.N, 'K': conf['K'], 'p(R=1)_theo': r1_theo ,'p(R=1)_1-norm': r1_1norm ,'p(R=1)_inf-norm': r1_infnorm,'p(A=0)_1-norm': a0_1norm ,'p(A=0)_inf-norm': a0_infnorm }
+            df1 = {'M1': conf['M1'], 'N': dataset.N, 'K': conf['K'], 'p(R=1)_theo': r1_theo ,'p(R=1)_2-norm': r1_1norm ,'p(R=1)_inf-norm': r1_infnorm,'p(A=0)_2-norm': a0_1norm ,'p(A=0)_inf-norm': a0_infnorm }
             probabilities = probabilities.append(df1, ignore_index = True)
             
         pd.DataFrame(probabilities).to_csv(filename)
@@ -501,41 +504,41 @@ def test_real_hardware():
 def test_delta(n_processes=1):
     
     params = {
-        'delta': [4.5], 
-        #'delta': [round(x,2) for x in np.arange(0,6,0.1)],
+        #'delta': [4.5], 
+        'delta': [round(x,2) for x in np.arange(0,2,0.05)],
         'quantization': [None],
-        'dataset_name': ['noisymoon'],
+        'dataset_name': ['diabetes'],
         'random_init_centroids': [False],
-        'K': [2],
+        'K': [8],
         'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
-        'max_iterations': [10]
+        'max_iterations': [5]
     }
     
-    dataset = Dataset('noisymoon', 'inf-norm')
+    dataset = Dataset('diabetes', '2-norm')
     
     print("-------------------- Delta Kmeans --------------------")
     par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
-    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
-    plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
-    plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     
 def elbow_method(n_process):
     params = {
         'delta': [None],
-        'quantization': [3],
-        'dataset_name': ['diabetes'],
+        'quantization': [1],
+        'dataset_name': ['iris'],
         'random_init_centroids': [False],
-        'K': [k for k in range(2, 21)],
-        'M1': [150],
+        'K': [k for k in range(2, 9)],
+        'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
-        'max_iterations': [10]
+        'max_iterations': [5]
     }
     
-    dataset = Dataset('diabetes', 'inf-norm')
+    dataset = Dataset('iris', '2-norm')
         
 
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
@@ -555,7 +558,7 @@ def only_plot():
     configuration = 7
     
     for datasetname in datasets:
-        dataset = Dataset(datasetname, '1-norm')
+        dataset = Dataset(datasetname, '2-norm')
         if datasetname == 'aniso':
             conf = {
                     "delta": 0.9,
@@ -621,7 +624,6 @@ if __name__ == "__main__":
         print("ERROR: specify a positive integer for the number of processes")
         exit()
         
-    #quantization = 4
     
     #elbow_method(processes)
     #exit()
@@ -633,100 +635,19 @@ if __name__ == "__main__":
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
-    '''
-
     params = {
         'delta': [0], 
-        'quantization': [3],
+        'quantization': [1,2,3],
         'dataset_name': ['iris'],
         'random_init_centroids': [False],
         'K': [3],
         'M1': [150],
-        'shots': [8192],
+        'shots': [None],
         'sc_tresh':  [0],
-        'max_iterations': [10]
-    }
-    
-    dataset = Dataset('iris', '1-norm')
-    
-    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
-    
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
-    
-    print("-------------------- Classical Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
-    
-    print("-------------------- Delta Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
-    
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
-    plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
-    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
-    plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
-    plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
-    plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    
-    '''
-    
-    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                                                DIABETES DATASET TEST
-    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
-    '''
-
-    params = {
-        'quantization': [quantization],
-        'dataset_name': ['diabetes'],
-        'random_init_centroids': [False],
-        'K': [8],
-        'M1': [2,4,8,16,32,64,128],
-        'shots': [None],
-        'sc_tresh':  [1e-4],
-        'max_iterations': [10]
-    }
-    
-    dataset = Dataset('diabetes', 'inf-norm')
-    
-    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
-    
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
-
-    
-    print("-------------------- Classical Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
-    
-    print("-------------------- Delta Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
-    
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
-    plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
-    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
-    plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
-    plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
-    plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    '''
-    
-
-    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                                                ANISO DATASET TEST
-    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
-    
-    params = {
-        'delta': [0],
-        'quantization': [1,2,3],
-        'dataset_name': ['aniso'],
-        'random_init_centroids': [False],
-        'K': [2],
-        'M1': [64],
-        'shots': [None],
-        'sc_tresh':  [1e-4],
         'max_iterations': [5]
     }
     
-    dataset = Dataset('aniso', '1-norm')
+    dataset = Dataset('iris', '2-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -749,12 +670,89 @@ if __name__ == "__main__":
     exit()
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                                DIABETES DATASET TEST
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    '''
+    params = {
+        'quantization': [1],
+        'dataset_name': ['diabetes'],
+        'random_init_centroids': [False],
+        'K': [8],
+        'M1': [None],
+        'shots': [None],
+        'sc_tresh':  [1e-4],
+        'max_iterations': [5]
+    }
+    
+    dataset = Dataset('diabetes', '2-norm')
+    
+    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
+    
+    #print("-------------------- Quantum Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+
+    
+    #print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    
+    #print("-------------------- Delta Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
+    
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+    '''
+
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                                ANISO DATASET TEST
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    '''
+
+    params = {
+        'delta': [0],
+        'quantization': [1,2,3],
+        'dataset_name': ['aniso'],
+        'random_init_centroids': [False],
+        'K': [3],
+        'M1': [64],
+        'shots': [None],
+        'sc_tresh':  [1e-4],
+        'max_iterations': [5]
+    }
+    
+    dataset = Dataset('aniso', 'inf-norm')
+    
+    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
+    
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    
+    #print("-------------------- Classical Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    
+    #print("-------------------- Delta Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
+    
+    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')  
+
+    '''
+
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
+
     params = {
         'delta' : [0],
-        'quantization': [2,3],
+        'quantization': [1],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
@@ -768,8 +766,8 @@ if __name__ == "__main__":
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Quantum Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Classical Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
@@ -777,30 +775,28 @@ if __name__ == "__main__":
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed) 
     
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
-    #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans', version=1)
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
 
-    exit()
-    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS2 DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
 
     params = {
         'delta': [0],
-        'quantization': [2,3,4,5],
+        'quantization': [1,2,3],
         'dataset_name': ['blobs2'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [150],
+        'M1': [64],
         'shots': [None],
         'sc_tresh':  [1e-4],
-        'max_iterations': [10]
+        'max_iterations': [5]
     }
      
     dataset = Dataset('blobs2', 'inf-norm')
@@ -823,7 +819,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
       
-    '''
+    
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 NOISYMOON DATASET TEST
@@ -831,17 +827,16 @@ if __name__ == "__main__":
 
     params = {
         'delta': [0],
-        'quantization': [5],
+        'quantization': [1,2,3],
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
         'K': [2],
-        'M1': [150],
+        'M1': [64],
         'shots': [None],
         'sc_tresh':  [1e-4],
-        'max_iterations': [10]
+        'max_iterations': [5]
     }
     
-
     dataset = Dataset('noisymoon', 'inf-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")

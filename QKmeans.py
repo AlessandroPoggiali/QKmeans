@@ -33,11 +33,13 @@ class QKMeans():
             self.M1 = conf['M1']
         else:
             self.M1 = None
-        
+                        
         if conf['shots'] is None:
             if self.M1 is None:
-                #self.shots = 8192
-                self.shots = min(self.K * 1024, 500000)
+                if self.quantization == 1:
+                    self.shots = 1024
+                else:
+                    self.shots = min(self.K * 1024, 500000)
             else:
                 self.shots = min(self.K * self.M1 * 1024, 500000)
         else:
@@ -821,7 +823,8 @@ class QKMeans():
                 series.append(old_centroid)
                 
         df_centroids = pd.concat(series, axis=1).T
-        self.centroids = self.dataset.normalize(df_centroids).values
+        self.centroids = self.dataset.normalize(df_centroids)
+        self.centroids = self.centroids.apply(lambda row: 2*np.arcsin(row), axis=1).values
 
 
     """
@@ -973,7 +976,12 @@ class QKMeans():
     Returns the final Sum of Squared Error
     """
     def SSE(self):
-        return round(measures.SSE(self.data, self.centroids, self.cluster_assignment), 3)
+        series = []
+        for i in range(self.K):
+            series.append(self.data.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
+
+        centroids = pd.concat(series, axis=1).T.values
+        return round(measures.SSE(self.data, centroids, self.cluster_assignment), 3)
     
     
     """
