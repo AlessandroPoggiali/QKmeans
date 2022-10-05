@@ -10,6 +10,7 @@ from qiskit.providers.aer import StatevectorSimulator
 from qiskit.providers.ibmq import least_busy
 from qiskit.tools.monitor import job_monitor
 from qiskit import IBMQ
+from sklearn.preprocessing import StandardScaler, normalize
 from qiskit.circuit.library import IntegerComparator
 from QRAM import buildCentroidState, buildVectorsState, encodeVector
 from utility import measures
@@ -812,7 +813,30 @@ class QKMeans():
     """
     def computing_centroids(self):
         #data = data.reset_index(drop=True)
-        
+        #self.dataset.original_df['cluster'] = self.cluster_assignment
+        #self.dataset.original_df['cluster'].astype(int)
+
+        series = []
+        for i in range(self.K):
+            if i in self.cluster_assignment:
+                series.append(self.dataset.original_df.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
+            else:
+                old_centroid = pd.Series(self.centroids[i])
+                old_centroid = old_centroid.rename(lambda x: "f" + str(x))
+                series.append(old_centroid)
+                
+        df_centroids = pd.concat(series, axis=1).T
+
+        scaler = StandardScaler()
+        df_centroids.loc[:,:] = scaler.fit_transform(df_centroids.loc[:,:])
+        df_centroids.loc[:,:] = normalize(df_centroids.loc[:,:])
+        if self.dataset.preprocessing == 'inf-norm':
+            df_centroids.loc[:,:] = df_centroids.loc[:,:].apply(lambda row : row/max(abs(row)), axis=1)
+            
+        df_centroids.loc[:,:] = df_centroids.loc[:,:].apply(lambda row: 2*np.arcsin(row), axis=1)
+        self.centroids = df_centroids.values
+
+        '''
         series = []
         for i in range(self.K):
             if i in self.cluster_assignment:
@@ -825,6 +849,7 @@ class QKMeans():
         df_centroids = pd.concat(series, axis=1).T
         self.centroids = self.dataset.normalize(df_centroids)
         self.centroids = self.centroids.apply(lambda row: 2*np.arcsin(row), axis=1).values
+        '''
 
 
     """

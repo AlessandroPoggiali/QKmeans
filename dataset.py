@@ -10,7 +10,7 @@ font = {'size'   : 22}
 
 plt.rc('font', **font)
 
-n_samlpes = 1500
+n_samples = 1500
 
 class Dataset:
     
@@ -24,6 +24,7 @@ class Dataset:
         self.dataset_name = dataset_name
         self.preprocessing = preprocessing
         self.ground_truth = None
+        self.original_df = self.load_dataset(dataset_name, to_preprocess=False)
         self.df = self.load_dataset(dataset_name)  
         self.N = len(self.df.columns)
         self.M = len(self.df)
@@ -273,7 +274,7 @@ class Dataset:
     :return: df
     """
     def load_noisymoon(self, to_preprocess=True):
-        x, y = datasets.make_moons(n_samples=n_samlpes, noise=0.05, random_state=170)
+        x, y = datasets.make_moons(n_samples=n_samples, noise=0.05, random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index
@@ -298,7 +299,7 @@ class Dataset:
     :return: df
     """
     def load_blobs(self, to_preprocess=True):
-        x, y = datasets.make_blobs(n_samples=n_samlpes, random_state=8)
+        x, y = datasets.make_blobs(n_samples=n_samples, random_state=8)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])  
         
         df['ground_truth'] = df.index
@@ -323,7 +324,7 @@ class Dataset:
     :return: df
     """
     def load_aniso(self, to_preprocess=True):
-        x, y = datasets.make_blobs(n_samples=n_samlpes, random_state=170)
+        x, y = datasets.make_blobs(n_samples=n_samples, random_state=170)
         transformation = [[0.6, -0.6], [-0.4, 0.8]]
         x = np.dot(x, transformation)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
@@ -350,7 +351,7 @@ class Dataset:
     :return: df
     """
     def load_blobs_2(self, to_preprocess=True):
-        x, y = datasets.make_blobs(n_samples=n_samlpes, cluster_std=[1.0, 2.5, 0.5], random_state=170)
+        x, y = datasets.make_blobs(n_samples=n_samples, cluster_std=[1.0, 2.5, 0.5], random_state=170)
         df = pd.DataFrame(x, y, columns=["f0", "f1"])
         
         df['ground_truth'] = df.index

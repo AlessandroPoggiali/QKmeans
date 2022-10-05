@@ -98,7 +98,7 @@ def computing_cluster_2(dataset, centroids):
     Rqram_qbits = 1                        # number of qbits for qram register
     Aqram_qbits = I_qbits + C_qbits + Aknn_qbits - 2 # number of qbits for qram ancillas
     max_qbits = I_qbits + C_qbits + Aknn_qbits + Rqram_qbits + Aqram_qbits
-    #print("total qbits needed:  " + str(Tot_qbits))
+    print("total qbits needed:  " + str(max_qbits))
     
     a = QuantumRegister(Aknn_qbits, 'a')   # ancilla qubit for distance
     i = QuantumRegister(I_qbits, 'i')      # feature index

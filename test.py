@@ -634,7 +634,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     params = {
         'delta': [0], 
         'quantization': [1,2,3],
@@ -668,7 +668,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
     exit()
-    
+    '''
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 DIABETES DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -752,7 +752,7 @@ if __name__ == "__main__":
 
     params = {
         'delta' : [0],
-        'quantization': [1],
+        'quantization': [2],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
@@ -766,8 +766,8 @@ if __name__ == "__main__":
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    #print("-------------------- Quantum Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Classical Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
@@ -775,12 +775,13 @@ if __name__ == "__main__":
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed) 
     
-    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans', version=1)
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+    exit()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS2 DATASET TEST
