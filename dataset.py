@@ -5,12 +5,14 @@ from sklearn.preprocessing import StandardScaler, normalize
 import matplotlib.pyplot as plt
 from utility import qdrawer
 from sklearn.decomposition import PCA
+from matplotlib import cm, colors
+from mpl_toolkits.mplot3d import Axes3D
 
 font = {'size'   : 22}
 
 plt.rc('font', **font)
 
-n_samples = 1500
+n_samples = 50
 
 class Dataset:
     
@@ -25,10 +27,10 @@ class Dataset:
         self.preprocessing = preprocessing
         self.ground_truth = None
         self.original_df = self.load_dataset(dataset_name, to_preprocess=False)
-        self.df = self.load_dataset(dataset_name)  
+        self.df = self.load_dataset(dataset_name, to_preprocess=True)  
         self.N = len(self.df.columns)
         self.M = len(self.df)
-        
+
     
     """
     scale: 
@@ -54,18 +56,49 @@ class Dataset:
     :return: data
     """
     def normalize(self, data):
+        '''
         if self.preprocessing is None or self.preprocessing == '2-norm':
             data.loc[:,:] = normalize(data.loc[:,:])
         elif self.preprocessing == 'inf-norm':
             data.loc[:,:] = normalize(data.loc[:,:])
             data = data.apply(lambda row : row/max(abs(row)), axis=1)
             #print(data.max(axis=1))
+        elif self.preprocessing == 'scaled':
+            for column in data.columns:
+                data[column] = data[column]/max(abs(data[column]))
         else: 
             print("ERROR: wrong norm in input")
             exit()
+        '''
+        data.loc[:,:] = normalize(data.loc[:,:])
         
         return data
+
+    def inv_stereo(self, df):
+        n = len(df.columns)
+        m = len(df)
+        self.N = n+1
+        column_name = 'f' + str(n)
+        df[column_name] = 0
+        for j in range(m):
+            s = sum(df.iloc[j, :]**2)
+            for i in range(n):
+                df.iloc[j,i] = 2*df.iloc[j,i]
+            df.iloc[j,i+1] = s-1
+            df.iloc[j, :] = df.iloc[j, :]/(s+1)
+        return df
     
+    def preprocess(self, df):
+        df = self.scale(df)
+        if self.preprocessing == '2-norm':
+            df = self.normalize(df)
+        elif self.preprocessing == 'ISP':
+            df = self.inv_stereo(df)
+        else:
+            print("ERROR: WRONG PREPROCESSING")
+            exit()
+        return df
+
     """
     plot2Features: 
         
@@ -169,6 +202,63 @@ class Dataset:
         for cluster, c in enumerate(centroids):
             qdrawer.draw_datapoint(c[0], c[1], color=colors[cluster], centroid=True)
        
+    def plotOnSphere(self, data, cluster_assignment, filename=None):
+        colors = ['b','g','r','c','m','y','k','w']
+        # Create a sphere
+        r = 1
+        pi = np.pi
+        cos = np.cos
+        sin = np.sin
+        phi, theta = np.mgrid[0.0:pi:100j, 0.0:2.0*pi:100j]
+        x = r*sin(phi)*cos(theta)
+        y = r*sin(phi)*sin(theta)
+        z = r*cos(phi)
+
+        #Set colours and render
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot_surface(x, y, z,  rstride=1, cstride=1, color='c', alpha=0.3, linewidth=0)
+
+        series = []
+        for i in set(cluster_assignment):
+            series.append(data.loc[[index for index, n in enumerate(cluster_assignment) if n == i]].mean())
+        centroids = pd.concat(series, axis=1).T.values
+
+        ind = 0 
+        for cluster, c in enumerate(centroids):
+            plt.plot(c[0],c[1],c[2],marker='*', color=colors[ind],markersize=20, markeredgecolor='k')
+            centroid_name = "c" + str(ind)
+            ax.text(c[0],c[1],c[2], centroid_name, fontsize=20)
+            ind = ind + 1
+        for cluster in set(cluster_assignment):
+            X = data.loc[[index for index, n in enumerate(cluster_assignment) if n == cluster]]
+            ax.scatter(X['f0'],X['f1'],X['f2'],color=colors[cluster],marker="o", s=20)
+        '''
+        for cluster, c in enumerate(centroids):
+            #plot data on the surface
+            X = df['f0']
+            Y = df['f1']
+            Z = df['f2']
+            ax.scatter(X,Y,Z,color=colors[cluster],marker="o", s=20)
+        '''
+
+        ax.set_xlim([-1,1])
+        ax.set_ylim([-1,1])
+        ax.set_zlim([-1,1])
+        ax.set_aspect("auto")
+        plt.tight_layout()
+        
+        if filename is not None:
+            plt.savefig(filename)
+        else:
+            plt.show()
+    
+        # Clear the current axes.
+        plt.cla() 
+        # Clear the current figure.
+        plt.clf() 
+        # Closes all the figure windows.
+        plt.close('all')
     
     """
     load_dataset: 
@@ -224,9 +314,7 @@ class Dataset:
         #df.reset_index(drop=True, inplace=True)
         
         if to_preprocess:
-            df = self.scale(df)
-            df = self.normalize(df)
-            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+            df = self.preprocess(df)
         
         return df
     
@@ -253,9 +341,7 @@ class Dataset:
         df = pd.DataFrame(data = principalComponents, columns = ['f0','f1','f2','f3'])
 
         if to_preprocess:
-            df = self.scale(df)
-            df = self.normalize(df)
-            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+            df = self.preprocess(df)
         
         return df
     
@@ -283,9 +369,7 @@ class Dataset:
         df = df.drop('ground_truth', axis=1)
         
         if to_preprocess:
-            df = self.scale(df)
-            df = self.normalize(df)
-            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+            df = self.preprocess(df)
             
         return df
     
@@ -308,9 +392,7 @@ class Dataset:
         df = df.drop('ground_truth', axis=1)
         
         if to_preprocess:
-            df = self.scale(df)
-            df = self.normalize(df)
-            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+            df = self.preprocess(df)
             
         return df
       
@@ -335,9 +417,7 @@ class Dataset:
         df = df.drop('ground_truth', axis=1)
         
         if to_preprocess:
-            df = self.scale(df)
-            df = self.normalize(df)
-            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+            df = self.preprocess(df)
             
         return df
       
@@ -360,9 +440,7 @@ class Dataset:
         df = df.drop('ground_truth', axis=1)
         
         if to_preprocess:
-            df = self.scale(df)
-            df = self.normalize(df)
-            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+            df = self.preprocess(df)
             
         return df
        
@@ -385,8 +463,6 @@ class Dataset:
         df = df.drop('ground_truth', axis=1)
         
         if to_preprocess:
-            df = self.scale(df)
-            df = self.normalize(df)
-            df = df.apply(lambda row: 2*np.arcsin(row), axis=1)
+            df = self.preprocess(df)
 
         return df
