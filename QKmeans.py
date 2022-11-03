@@ -263,7 +263,7 @@ class QKMeans():
         tot_execution_time = 0
         
         for index_v, vector in self.dataset.df.iterrows():
-            print("assagning cluster to vector " + str(index_v))
+            #print("assagning cluster to vector " + str(index_v))
             if Aqram_qbits > 0:
                 circuit = QuantumCircuit(a, i, r, q, c, outcome)
             else:

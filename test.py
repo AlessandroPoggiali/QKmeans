@@ -642,10 +642,10 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     params = {
         'delta': [0], 
-        'quantization': [1],
+        'quantization': [2],
         'dataset_name': ['iris'],
         'random_init_centroids': [False],
         'K': [3],
@@ -674,8 +674,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    exit()
-    
+    '''
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 DIABETES DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -719,11 +718,11 @@ if __name__ == "__main__":
     
     params = {
         'delta': [0],
-        'quantization': [1],
+        'quantization': [3],
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [64],
+        'M1': [2,4,8,16,32,64,128,150],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
@@ -755,11 +754,11 @@ if __name__ == "__main__":
 
     params = {
         'delta' : [0],
-        'quantization': [1],
+        'quantization': [3],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [150],
+        'M1': [2,4,8,16,32,64,128,150],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
@@ -791,11 +790,11 @@ if __name__ == "__main__":
 
     params = {
         'delta': [0],
-        'quantization': [1],
+        'quantization': [3],
         'dataset_name': ['blobs2'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [64],
+        'M1': [2,4,8,16,32,64,128,150],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
@@ -827,11 +826,11 @@ if __name__ == "__main__":
     
     params = {
         'delta': [0],
-        'quantization': [1],
+        'quantization': [3],
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
         'K': [2],
-        'M1': [50],
+        'M1': [2,4,8,16,32,64,128,150],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
