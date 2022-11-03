@@ -399,9 +399,11 @@ def plot_cluster(params, dataset, algorithm, seed):
         output_filename = "plot/cluster/" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".png"
         dataset.plot2Features(dataset.df, dataset.df.columns[0], dataset.df.columns[1], cluster_assignment=cluster_assignment,
                               initial_space=True, dataset_name=dataset.dataset_name, seed=seed, filename=output_filename, conf=conf, algorithm=algorithm)
+        '''
         if dataset.preprocessing == 'ISP' and dataset.N == 3:
             output_filename_sphere = "plot/cluster/sphere_" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".png"
             dataset.plotOnSphere(dataset.df, cluster_assignment, filename=output_filename_sphere)
+        '''
     
     
 def shots_test():
@@ -715,7 +717,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     params = {
         'delta': [0],
         'quantization': [3],
@@ -747,7 +749,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')  
-
+    '''
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
