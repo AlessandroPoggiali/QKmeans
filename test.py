@@ -228,7 +228,8 @@ def kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         index = indexlist[n_chunk][i]
         
         # execute classical kmeans
-        data = dataset.df
+        #data = dataset.df
+        data = dataset.original_df
         if conf['random_init_centroids']:
             initial_centroids = data.sample(n=conf['K'], random_state=seed).values
         else:
@@ -236,7 +237,7 @@ def kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
             #initial_centroids = kmeans_plusplus_initializer(dataset.df.values, conf['K'], kmeans_plusplus_initializer.FARTHEST_CENTER_CANDIDATE).initialize()
         
         filename_centroids = "result/initial_centroids/" + str(dataset.dataset_name) + "_kmeans_" + str(index) + ".csv"
-        centroids_df = pd.DataFrame(initial_centroids, columns=dataset.df.columns)
+        centroids_df = pd.DataFrame(initial_centroids, columns=dataset.original_df.columns)
         pd.DataFrame(centroids_df).to_csv(filename_centroids)
         #dataset.plot2Features(data, 'f0', 'f1', initial_centroids, filename='plot/kinit_'+str(index), conf=conf, algorithm='kmeans')
         
@@ -644,10 +645,10 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     params = {
         'delta': [0], 
-        'quantization': [2],
+        'quantization': [1,2,3],
         'dataset_name': ['iris'],
         'random_init_centroids': [False],
         'K': [3],
@@ -670,13 +671,13 @@ if __name__ == "__main__":
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
     
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    '''
+    exit()
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 DIABETES DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
