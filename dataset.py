@@ -12,7 +12,7 @@ font = {'size'   : 22}
 
 plt.rc('font', **font)
 
-n_samples = 150
+n_samples = 1500
 
 class Dataset:
     
@@ -281,6 +281,8 @@ class Dataset:
             df = self.load_blobs_2(to_preprocess)
         elif dataset_name == 'blobs3':
             df = self.load_blobs_3(to_preprocess)
+        elif dataset_name == 'blobs4':
+            df = self.load_blobs_4(to_preprocess)
         elif dataset_name == 'noisymoon':
             df = self.load_noisymoon(to_preprocess)
         elif dataset_name == 'aniso':
@@ -310,6 +312,10 @@ class Dataset:
         # drop class column
         df = df.drop('class', axis=1)
         
+        pca = PCA(n_components=2)
+        x = df.loc[:, :].values
+        principalComponents = pca.fit_transform(x)
+        df = pd.DataFrame(data = principalComponents, columns = ['f0','f1'])
         #df = df.sample(n=8, random_state=123)
         #df.reset_index(drop=True, inplace=True)
         
@@ -466,3 +472,27 @@ class Dataset:
             df = self.preprocess(df)
 
         return df
+
+    """
+    load_blobs_4: 
+        
+    It loads the blobs dataset
+    
+    :to_preprocess (optional, default value=True): if True apply preprocessing
+    
+    :return: df
+    """
+    def load_blobs_4(self, to_preprocess=True):
+        x, y = datasets.make_blobs(n_samples=n_samples, random_state=77, centers=4)
+        df = pd.DataFrame(x, y, columns=["f0", "f1"])  
+        
+        df['ground_truth'] = df.index
+        df.reset_index(drop=True, inplace=True)
+        self.ground_truth = df['ground_truth']
+        df = df.drop('ground_truth', axis=1)
+        
+        if to_preprocess:
+            df = self.preprocess(df)
+        
+        return df
+            
