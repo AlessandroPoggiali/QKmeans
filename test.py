@@ -658,7 +658,7 @@ if __name__ == "__main__":
         'max_iterations': [5]
     }
     
-    dataset = Dataset('iris', 'ISP')
+    dataset = Dataset('iris', '2-norm')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
