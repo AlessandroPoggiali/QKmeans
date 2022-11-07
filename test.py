@@ -663,7 +663,7 @@ if __name__ == "__main__":
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
     print("-------------------- Quantum Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Classical Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
