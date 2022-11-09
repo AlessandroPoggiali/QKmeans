@@ -296,6 +296,7 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         f = open(filename, 'w')
         f.close()
     
+    data = dataset.original_df
     for i, conf in enumerate(chunk):
 
         index = indexlist[n_chunk][i]
@@ -304,13 +305,13 @@ def delta_kmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         # execute delta kmenas
         deltakmeans = DeltaKmeans(dataset, conf, conf['delta'])        
         if conf['random_init_centroids']:
-            initial_centroids = dataset.df.sample(n=conf['K'], random_state=seed).values
+            initial_centroids = data.sample(n=conf['K'], random_state=seed).values
         else:
-            initial_centroids, indices = kmeans_plusplus(dataset.df.values, n_clusters=conf['K'], random_state=seed)
+            initial_centroids, indices = kmeans_plusplus(data.values, n_clusters=conf['K'], random_state=seed)
             #initial_centroids = kmeans_plusplus_initializer(dataset.df.values, conf['K'], kmeans_plusplus_initializer.FARTHEST_CENTER_CANDIDATE).initialize()
         #dataset.plot2Features(deltakmeans.data, 'f0', 'f1', initial_centroids, filename='plot/deltainit_'+str(index), conf=conf, algorithm='deltameans')
         filename_centroids = "result/initial_centroids/" + str(dataset.dataset_name) + "_deltakmeans_" + str(index) + ".csv"
-        centroids_df = pd.DataFrame(initial_centroids, columns=dataset.df.columns)
+        centroids_df = pd.DataFrame(initial_centroids, columns=data.columns)
         pd.DataFrame(centroids_df).to_csv(filename_centroids)
         
         
@@ -404,6 +405,12 @@ def plot_cluster(params, dataset, algorithm, seed):
         if dataset.preprocessing == 'ISP' and dataset.N == 3:
             output_filename_sphere = "plot/cluster/sphere_" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".png"
             dataset.plotOnSphere(dataset.df, cluster_assignment, filename=output_filename_sphere)
+        elif dataset.preprocessing == '2-norm' and dataset.N == 2:
+            output_filename_circle = "plot/cluster/cirlce_" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".png"
+            dataset.plotOnCircle(dataset.df, cluster_assignment, filename=output_filename_circle)
+        elif dataset.preprocessing == 'ISP' and dataset.N == 4 or  dataset.preprocessing == '2-norm' and dataset.N == 3:
+            output_filename_3D = "plot/cluster/original3D_" + str(dataset.dataset_name) + "_" + str(algorithm) + "_" + str(i) + ".png"
+            dataset.plot3D(dataset.original_df, cluster_assignment, filename=output_filename_3D)
             
     
     
@@ -645,7 +652,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
+    
     params = {
         'delta': [0], 
         'quantization': [1,2,3],
@@ -658,7 +665,7 @@ if __name__ == "__main__":
         'max_iterations': [5]
     }
     
-    dataset = Dataset('iris', '2-norm')
+    dataset = Dataset('iris', 'ISP')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
@@ -678,6 +685,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     exit()
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 DIABETES DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -863,7 +871,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS4 DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
+    '''
     params = {
         'delta' : [0],
         'quantization': [1,2],
@@ -877,6 +885,42 @@ if __name__ == "__main__":
     }
      
     dataset = Dataset('blobs4', '2-norm')
+
+    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
+    
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    
+    #print("-------------------- Delta Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed) 
+    
+    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans', version=1)
+    #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+    '''
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                                AGGREGATION DATASET TEST
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+    params = {
+        'delta' : [0],
+        'quantization': [1],
+        'dataset_name': ['aggregation'],
+        'random_init_centroids': [False],
+        'K': [7],
+        'M1': [None],
+        'shots': [None],
+        'sc_tresh':  [1e-4],
+        'max_iterations': [5]
+    }
+     
+    dataset = Dataset('aggregation', 'ISP')
 
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     

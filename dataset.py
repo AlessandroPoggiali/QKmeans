@@ -189,19 +189,72 @@ class Dataset:
     Plot the data in a circumference
     
     :data: dataframe of records
-    :centroids: numpy array of centroids
     :cluster_assignment: list of cluster assignment for every record
     """
-    def plotOnCircle(self, data, centroids, cluster_assignment):  
+    def plotOnCircle(self, data, cluster_assignment, filename=None):  
         colors = ['b','g','r','c','m','y','k','w']      
         qdrawer.draw_qubit()
         for index, item in data.iterrows():
             cluster = cluster_assignment[index]
             qdrawer.draw_datapoint(item[0], item[1], color=colors[cluster])
         
+        series = []
+        for i in set(cluster_assignment):
+            series.append(data.loc[[index for index, n in enumerate(cluster_assignment) if n == i]].mean())
+        centroids = pd.concat(series, axis=1).T
+        centroids = self.normalize(centroids)
+        centroids = centroids.values
         for cluster, c in enumerate(centroids):
             qdrawer.draw_datapoint(c[0], c[1], color=colors[cluster], centroid=True)
+
+        if filename is not None:
+            plt.savefig(filename)
+        else:
+            plt.show()
+    
+        # Clear the current axes.
+        plt.cla() 
+        # Clear the current figure.
+        plt.clf() 
+        # Closes all the figure windows.
+        plt.close('all')
        
+    def plot3D(self, data, cluster_assignment, filename=None):
+        colors = ['b','g','r','c','m','y','k','w']    
+        #Set colours and render
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_subplot(111, projection='3d')
+
+        series = []
+        for i in set(cluster_assignment):
+            series.append(data.loc[[index for index, n in enumerate(cluster_assignment) if n == i]].mean())
+        centroids = pd.concat(series, axis=1).T.values
+
+        ind = 0 
+        for cluster, c in enumerate(centroids):
+            plt.plot(c[0],c[1],c[2],marker='*', color=colors[ind],markersize=20, markeredgecolor='k')
+            centroid_name = "c" + str(ind)
+            ax.text(c[0],c[1],c[2], centroid_name, fontsize=20)
+            ind = ind + 1
+        for cluster in set(cluster_assignment):
+            X = data.loc[[index for index, n in enumerate(cluster_assignment) if n == cluster]]
+            ax.scatter(X['f0'],X['f1'],X['f2'],color=colors[cluster],marker="o", s=20)
+
+        ax.set_aspect("auto")
+        plt.tight_layout()
+
+        if filename is not None:
+            plt.savefig(filename)
+        else:
+            plt.show()
+
+        # Clear the current axes.
+        plt.cla() 
+        # Clear the current figure.
+        plt.clf() 
+        # Closes all the figure windows.
+        plt.close('all')
+    
     def plotOnSphere(self, data, cluster_assignment, filename=None):
         colors = ['b','g','r','c','m','y','k','w']
         # Create a sphere
@@ -287,6 +340,8 @@ class Dataset:
             df = self.load_noisymoon(to_preprocess)
         elif dataset_name == 'aniso':
             df = self.load_aniso(to_preprocess)
+        elif dataset_name == 'aggregation':
+            df = self.load_aggregation(to_preprocess)
         else:
             print("ERROR: No dataset found")
             exit()
@@ -309,13 +364,19 @@ class Dataset:
         df = datasets.load_iris(as_frame=True).frame
         # rename columns
         df.columns = ["f0","f1","f2","f3","class"]
+
+        self.ground_truth = df['class']
         # drop class column
         df = df.drop('class', axis=1)
-        
+        df = df.drop('f1', axis=1)
+        df.columns = ['f0','f1','f2']
+        '''
         pca = PCA(n_components=2)
         x = df.loc[:, :].values
         principalComponents = pca.fit_transform(x)
         df = pd.DataFrame(data = principalComponents, columns = ['f0','f1'])
+        '''
+
         #df = df.sample(n=8, random_state=123)
         #df.reset_index(drop=True, inplace=True)
         
@@ -496,3 +557,27 @@ class Dataset:
         
         return df
             
+    """
+    load_aggregation: 
+        
+    It loads the aggregation dataset
+    
+    :to_preprocess (optional, default value=True): if True apply preprocessing
+    
+    :return: df
+    """
+    def load_aggregation(self, to_preprocess=True):
+        df = pd.read_csv('aggregation.txt', sep='\t', header=None)
+        df.columns = ['f0','f1','ground_truth']
+        df = df.sort_values(by=['ground_truth'])
+        df['ground_truth'] = df['ground_truth']-1
+
+        df.reset_index(drop=True, inplace=True)
+         
+        self.ground_truth = df['ground_truth']
+        df = df.drop('ground_truth', axis=1)
+        
+        if to_preprocess:
+            df = self.preprocess(df)
+        
+        return df
