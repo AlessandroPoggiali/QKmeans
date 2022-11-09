@@ -400,12 +400,34 @@ class Dataset:
         df.columns = ["f0","f1","f2","f3","f4","f5","f6","f7","f8","f9","class"]
         # drop class column
         df = df.drop('class', axis=1)
-        
-        df = self.scale(df)
+        df = df.drop('f9', axis=1)
+        df = df.drop('f8', axis=1)
+        df = df.drop('f7', axis=1)
+        '''
         pca = PCA(n_components=4)
         x = df.loc[:, :].values
         principalComponents = pca.fit_transform(x)
         df = pd.DataFrame(data = principalComponents, columns = ['f0','f1','f2','f3'])
+        '''
+        if to_preprocess:
+            df = self.preprocess(df)
+        
+        return df
+
+    """
+    load_wine: 
+        
+    It loads the wine dataset
+    
+    :to_preprocess (optional, default value=True): if True apply preprocessing
+    
+    :return: df
+    """
+    def load_wine(self, to_preprocess=True):
+        df = datasets.load_wine(as_frame=True).frame
+        df = df.drop('target', axis=1)
+        df = df[df.var().sort_values()[6:].index]
+        df.columns = ["f0","f1","f2","f3","f4","f5","f6"]
 
         if to_preprocess:
             df = self.preprocess(df)

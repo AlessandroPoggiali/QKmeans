@@ -547,16 +547,16 @@ def elbow_method(n_process):
     params = {
         'delta': [None],
         'quantization': [1],
-        'dataset_name': ['iris'],
+        'dataset_name': ['diabetes'],
         'random_init_centroids': [False],
-        'K': [k for k in range(2, 9)],
+        'K': [k for k in range(2, 21)],
         'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
     }
     
-    dataset = Dataset('iris', '2-norm')
+    dataset = Dataset('diabetes', '2-norm')
         
 
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
@@ -652,7 +652,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     params = {
         'delta': [0], 
         'quantization': [1,2,3],
@@ -684,8 +684,8 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    exit()
     
+    '''
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 DIABETES DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -722,6 +722,44 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     '''
+
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                                WINE DATASET TEST
+    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    
+    params = {
+        'quantization': [1,2,3],
+        'dataset_name': ['wine'],
+        'random_init_centroids': [False],
+        'K': [3],
+        'M1': [178],
+        'shots': [None],
+        'sc_tresh':  [1e-4],
+        'max_iterations': [5]
+    }
+    
+    dataset = Dataset('wine', 'ISP')
+    
+    print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
+    
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+
+    
+    #print("-------------------- Classical Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    
+    #print("-------------------- Delta Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
+    
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+
+    exit()
 
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
