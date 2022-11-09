@@ -328,7 +328,7 @@ class Dataset:
             df = self.load_iris(to_preprocess)
         elif dataset_name == 'diabetes':
             df = self.load_diabetes(to_preprocess)
-        elif dataset_name == 'winde':
+        elif dataset_name == 'wine':
             df = self.load_wine(to_preprocess)
         elif dataset_name == 'blobs':
             df = self.load_blobs(to_preprocess)
