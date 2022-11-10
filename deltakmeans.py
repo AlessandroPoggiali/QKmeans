@@ -51,7 +51,7 @@ class DeltaKmeans():
     Computes the noisy cluster assignment for every record 
     """
     def computing_cluster(self): #given X (points) and centers: 2 numpy arrays
-        X = self.data.values
+        X = self.dataset.original_df.values
         centers = self.centroids
         labels = []
         count = 0
@@ -80,14 +80,13 @@ class DeltaKmeans():
         series = []
         for i in range(self.K):
             if i in self.cluster_assignment:
-                series.append(self.data.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
+                series.append(self.dataset.original_df.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
             else:
                 old_centroid = pd.Series(self.centroids[i])
                 old_centroid = old_centroid.rename(lambda x: "f" + str(x))
                 series.append(old_centroid)
-                
-        df_centroids = pd.concat(series, axis=1).T
-        self.centroids = self.dataset.normalize(df_centroids).values
+
+        self.centroids = pd.concat(series, axis=1).T.values
     
     
     """
@@ -146,7 +145,7 @@ class DeltaKmeans():
             self.times.append(elapsed)
             
             # computing measures
-            sim = measures.check_similarity(self.data, self.centroids, self.cluster_assignment)
+            sim = measures.check_similarity(self.dataset.original_df, self.centroids, self.cluster_assignment)
             self.similarity_list.append(sim)
             self.SSE_list.append(self.SSE())
             self.silhouette_list.append(self.silhouette())
@@ -181,10 +180,10 @@ class DeltaKmeans():
     def SSE(self):
         series = []
         for i in range(self.K):
-            series.append(self.data.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
+            series.append(self.dataset.original_df.loc[[index for index, n in enumerate(self.cluster_assignment) if n == i]].mean())
 
         centroids = pd.concat(series, axis=1).T.values
-        return round(measures.SSE(self.data, centroids, self.cluster_assignment), 3)
+        return round(measures.SSE(self.dataset.original_df, centroids, self.cluster_assignment), 3)
     
     """
     silhouette: 
@@ -195,7 +194,7 @@ class DeltaKmeans():
         if len(set(self.cluster_assignment)) <= 1 :
             return None
         else:
-            return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
+            return round(metrics.silhouette_score(self.dataset.original_df, self.cluster_assignment, metric='euclidean'), 3)
     
     """
     vmeasure: 
@@ -242,7 +241,7 @@ class DeltaKmeans():
     :index_conf: configuration number associated to the algorithm execution
     """
     def print_result(self, filename=None, process=0, index_conf=0):
-        self.dataset.plotOnCircle(self.data, self.centroids, self.cluster_assignment)
+        #self.dataset.plotOnCircle(self.data, self.centroids, self.cluster_assignment)
         
         #print("")
         #print("---------------- QKMEANS RESULT ----------------")

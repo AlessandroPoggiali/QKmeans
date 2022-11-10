@@ -523,18 +523,18 @@ def test_delta(n_processes=1):
     
     params = {
         #'delta': [4.5], 
-        'delta': [round(x,2) for x in np.arange(0,2,0.05)],
+        'delta': [round(x,2) for x in np.arange(6,7,0.1)],
         'quantization': [None],
-        'dataset_name': ['diabetes'],
+        'dataset_name': ['wine'],
         'random_init_centroids': [False],
-        'K': [8],
+        'K': [3],
         'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
     }
     
-    dataset = Dataset('diabetes', '2-norm')
+    dataset = Dataset('wine', None)
     
     print("-------------------- Delta Kmeans --------------------")
     par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
@@ -546,26 +546,27 @@ def test_delta(n_processes=1):
 def elbow_method(n_process):
     params = {
         'delta': [None],
-        'quantization': [1],
-        'dataset_name': ['diabetes'],
+        'quantization': [1,2,3],
+        'dataset_name': ['iris'],
         'random_init_centroids': [False],
-        'K': [k for k in range(2, 21)],
+        'K': [k for k in range(2, 9)],
         'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
     }
     
-    dataset = Dataset('diabetes', '2-norm')
+    dataset = Dataset('iris', 'ISP')
         
 
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    #print("-------------------- Quantum Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
-    print("-------------------- Classical Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Classical Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+
     '''
     print("-------------------- Delta Kmeans --------------------")
     par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)  
@@ -643,8 +644,8 @@ if __name__ == "__main__":
         exit()
         
     
-    #elbow_method(processes)
-    #exit()
+    elbow_method(processes)
+    exit()
         
     #test_delta(processes)
     #exit()
@@ -652,14 +653,14 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     params = {
         'delta': [0], 
-        'quantization': [1,2,3],
+        'quantization': [1],
         'dataset_name': ['iris'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [150],
+        'M1': [None],
         'shots': [None],
         'sc_tresh':  [0],
         'max_iterations': [5]
@@ -669,23 +670,23 @@ if __name__ == "__main__":
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Quantum Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
-    #print("-------------------- Classical Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
     
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
     
-    '''
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 DIABETES DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -728,11 +729,11 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     
     params = {
-        'quantization': [1,2,3],
+        'quantization': [1],
         'dataset_name': ['wine'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [178],
+        'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
@@ -742,12 +743,12 @@ if __name__ == "__main__":
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Quantum Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
 
     
-    #print("-------------------- Classical Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
@@ -760,18 +761,18 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
 
     exit()
-
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     params = {
         'delta': [0],
-        'quantization': [3],
+        'quantization': [1],
         'dataset_name': ['aniso'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
+        'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
@@ -781,33 +782,33 @@ if __name__ == "__main__":
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Quantum Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
-    #print("-------------------- Classical Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
     
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
-    #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')  
-    '''
+
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     params = {
         'delta' : [0],
-        'quantization': [3],
+        'quantization': [1],
         'dataset_name': ['blobs'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
+        'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
@@ -817,33 +818,33 @@ if __name__ == "__main__":
 
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Quantum Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
-    #print("-------------------- Classical Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed) 
     
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
-    #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans', version=1)
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    '''
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS2 DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     params = {
         'delta': [0],
-        'quantization': [3],
+        'quantization': [1],
         'dataset_name': ['blobs2'],
         'random_init_centroids': [False],
         'K': [3],
-        'M1': [2,4,8,16,32,64,128,150],
+        'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
@@ -853,33 +854,33 @@ if __name__ == "__main__":
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Quantum Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
-    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
-    #print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    print("-------------------- Classical Kmeans --------------------")
     
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)     
     
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
-    #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    '''
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 NOISYMOON DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    '''
+    
     params = {
         'delta': [0],
-        'quantization': [3],
+        'quantization': [1],
         'dataset_name': ['noisymoon'],
         'random_init_centroids': [False],
         'K': [2],
-        'M1': [2,4,8,16,32,64,128,150],
+        'M1': [None],
         'shots': [None],
         'sc_tresh':  [1e-4],
         'max_iterations': [5]
@@ -889,23 +890,23 @@ if __name__ == "__main__":
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    print("-------------------- Quantum Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Quantum Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
 
 
-    #print("-------------------- Classical Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    print("-------------------- Classical Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed) 
     
-    plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
+    #plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
     #plot_cluster(dict(params), dataset, algorithm='deltakmeans', seed=seed)
-    #plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
+    plot_cluster(dict(params), dataset, algorithm='kmeans', seed=seed)
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    '''
+    
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS4 DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -945,7 +946,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 AGGREGATION DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
+    '''
     params = {
         'delta' : [0],
         'quantization': [1],
@@ -977,3 +978,4 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans', version=1)
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+    '''

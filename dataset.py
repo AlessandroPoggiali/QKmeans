@@ -27,7 +27,10 @@ class Dataset:
         self.preprocessing = preprocessing
         self.ground_truth = None
         self.original_df = self.load_dataset(dataset_name, to_preprocess=False)
-        self.df = self.load_dataset(dataset_name, to_preprocess=True)  
+        if preprocessing is not None:
+            self.df = self.load_dataset(dataset_name, to_preprocess=True)  
+        else:
+            self.df = self.original_df
         self.N = len(self.df.columns)
         self.M = len(self.df)
 
@@ -89,7 +92,6 @@ class Dataset:
         return df
     
     def preprocess(self, df):
-        df = self.scale(df)
         if self.preprocessing == '2-norm':
             df = self.normalize(df)
         elif self.preprocessing == 'ISP':
@@ -381,7 +383,7 @@ class Dataset:
 
         #df = df.sample(n=8, random_state=123)
         #df.reset_index(drop=True, inplace=True)
-        
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
         
@@ -411,6 +413,7 @@ class Dataset:
         principalComponents = pca.fit_transform(x)
         df = pd.DataFrame(data = principalComponents, columns = ['f0','f1','f2','f3'])
         '''
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
         
@@ -427,10 +430,12 @@ class Dataset:
     """
     def load_wine(self, to_preprocess=True):
         df = datasets.load_wine(as_frame=True).frame
+        self.ground_truth = df['target']
         df = df.drop('target', axis=1)
         df = df[df.var().sort_values()[6:].index]
         df.columns = ["f0","f1","f2","f3","f4","f5","f6"]
 
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
         
@@ -459,6 +464,7 @@ class Dataset:
         self.ground_truth = df['ground_truth']
         df = df.drop('ground_truth', axis=1)
         
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
             
@@ -482,6 +488,7 @@ class Dataset:
         self.ground_truth = df['ground_truth']
         df = df.drop('ground_truth', axis=1)
         
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
             
@@ -507,6 +514,7 @@ class Dataset:
         self.ground_truth = df['ground_truth']
         df = df.drop('ground_truth', axis=1)
         
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
             
@@ -530,6 +538,7 @@ class Dataset:
         self.ground_truth = df['ground_truth']
         df = df.drop('ground_truth', axis=1)
         
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
             
@@ -553,6 +562,7 @@ class Dataset:
         self.ground_truth = df['ground_truth']
         df = df.drop('ground_truth', axis=1)
         
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
 
@@ -576,6 +586,7 @@ class Dataset:
         self.ground_truth = df['ground_truth']
         df = df.drop('ground_truth', axis=1)
         
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
         
@@ -601,6 +612,7 @@ class Dataset:
         self.ground_truth = df['ground_truth']
         df = df.drop('ground_truth', axis=1)
         
+        df = self.scale(df)
         if to_preprocess:
             df = self.preprocess(df)
         

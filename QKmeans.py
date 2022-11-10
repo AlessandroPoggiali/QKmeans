@@ -784,7 +784,7 @@ class QKMeans():
         if len(set(self.cluster_assignment)) <= 1 :
             return None
         else:
-            return round(metrics.silhouette_score(self.data, self.cluster_assignment, metric='euclidean'), 3)
+            return round(metrics.silhouette_score(self.dataset.original_df, self.cluster_assignment, metric='euclidean'), 3)
     
     """
     vmeasure: 
