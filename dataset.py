@@ -12,7 +12,7 @@ font = {'size'   : 22}
 
 plt.rc('font', **font)
 
-n_samples = 1500
+n_samples = 150
 
 class Dataset:
     

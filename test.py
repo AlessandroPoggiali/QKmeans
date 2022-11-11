@@ -181,7 +181,7 @@ def QKmeans_test(dataset, chunk, n_chunk, seed, indexlist):
         
         QKMEANS.print_params(n_chunk, i)
         
-        QKMEANS.run(initial_centroids=initial_centroids)    
+        QKMEANS.run(initial_centroids=initial_centroids, real_hw=True)    
         
         
         f = open(filename, 'a')
@@ -499,24 +499,24 @@ def shots_test():
 def test_real_hardware():
     params = {
         'delta': [None],
-        'quantization': [2],
+        'quantization': [1],
         'dataset_name': ['blobs3'],
         'random_init_centroids': [False],
         'K': [2],
         'M1': [None],
-        'shots': [256],
+        'shots': [None],
         'sc_tresh':  [1e-4],
-        'max_iterations': [1]
+        'max_iterations': [5]
     }
      
-    dataset = Dataset('blobs3', 'inf-norm')
+    dataset = Dataset('blobs3', 'ISP')
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
     print("-------------------- Quantum Kmeans --------------------")
     par_test(dict(params), dataset, algorithm="qkmeans", n_processes=1, seed=seed)
     
-    plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
+    #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     plot_cluster(dict(params), dataset, algorithm='qkmeans', seed=seed)
 
 def test_delta(n_processes=1):
@@ -623,8 +623,8 @@ if __name__ == "__main__":
     #shots_test()
     #exit()
     
-    #test_real_hardware()
-    #exit()
+    test_real_hardware()
+    exit()
     
     #only_plot()
     #exit()
@@ -644,8 +644,8 @@ if __name__ == "__main__":
         exit()
         
     
-    elbow_method(processes)
-    exit()
+    #elbow_method(processes)
+    #exit()
         
     #test_delta(processes)
     #exit()
@@ -653,7 +653,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 IRIS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     params = {
         'delta': [0], 
         'quantization': [1],
@@ -670,11 +670,11 @@ if __name__ == "__main__":
     
     print("---------------------- " + str(dataset.dataset_name) + " Test ----------------------\n")
     
-    #print("-------------------- Quantum Kmeans --------------------")
-    #par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
+    print("-------------------- Quantum Kmeans --------------------")
+    par_test(dict(params), dataset, algorithm="qkmeans", n_processes=processes, seed=seed)
     
-    print("-------------------- Classical Kmeans --------------------")
-    par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
+    #print("-------------------- Classical Kmeans --------------------")
+    #par_test(dict(params), dataset, algorithm="kmeans", n_processes=processes, seed=seed)
     
     #print("-------------------- Delta Kmeans --------------------")
     #par_test(dict(params), dataset, algorithm="deltakmeans", n_processes=processes, seed=seed)    
@@ -685,7 +685,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
-    
+    '''
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 DIABETES DATASET TEST
@@ -727,7 +727,7 @@ if __name__ == "__main__":
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 WINE DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     params = {
         'quantization': [1],
         'dataset_name': ['wine'],
@@ -760,12 +760,12 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
 
-    exit()
+    '''
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 ANISO DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    
+    '''
     params = {
         'delta': [0],
         'quantization': [1],
@@ -797,7 +797,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')  
-
+    '''
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS DATASET TEST
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -833,6 +833,7 @@ if __name__ == "__main__":
     #plot_initial_centroids(dict(params), dataset, algorithm='qkmeans', version=1)
     #plot_initial_centroids(dict(params), dataset, algorithm='deltakmeans')
     #plot_initial_centroids(dict(params), dataset, algorithm='kmeans')
+    exit()
     
     '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                                 BLOBS2 DATASET TEST
