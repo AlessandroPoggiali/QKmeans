@@ -499,7 +499,7 @@ def shots_test():
 def test_real_hardware():
     params = {
         'delta': [None],
-        'quantization': [1],
+        'quantization': [2],
         'dataset_name': ['blobs3'],
         'random_init_centroids': [False],
         'K': [2],
