@@ -1,5 +1,5 @@
 # QKmeans
-Qantum version of the k-means clusterig algorithm. 3 versions of the algorithm are implemented:
+Qantum version of the k-means clustering algorithm. Three versions of the algorithm are implemented:
 
 1) q-k-means-1: it makes parallel the distance computation between a pair of dataset record
 2) q-k-means-2: it makes parallel the cluster assignment to a given record
